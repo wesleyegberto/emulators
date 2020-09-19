@@ -35,14 +35,25 @@ class Memory:
 
     def write_8bit(self, address, value):
         """ Store a 8-bit value at address. """
-        self.memory[address] = value % 0x8
+        self.memory[address] = value & 0xFF
+
+    def read_8bit(self, address):
+        return self.memory[address]
 
     def write_16bit(self, address, value):
-        """ Store a 16-bit value at address. """
-        self.memory[address] = value % 0x10
+        """ Store a 16-bit value into two 8-bit cells starting at given address. """
 
-    def read(self, address):
-        return self.memory[address]
+        self.memory[address] = (value >> 8) & 0xFF
+        address = address + 1
+        self.memory[address] = value & 0xFF
+
+    def read_16bit(self, address):
+        """ Read a 16-bit value from two 8-bit cells starting at given address. """
+
+        # TODO: read 2 8-bit cells
+        val = (self.memory[address] & 0xFF) << 8
+        address = address + 1
+        return val | (self.memory[address] & 0xFF)
 
     def read_range(self, offset, number_bytes):
         return self.memory[offset:(offset + number_bytes)]

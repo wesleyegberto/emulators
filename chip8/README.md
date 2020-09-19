@@ -21,6 +21,7 @@ This implementation divides the memory as following:
     * 0xED2: register `I`
     * 0xED3: register `DT`
     * 0xED4: register `ST`
+  * 0xEF0 to 0xEFF (16 bytes): data registers (from `V0` to `VF`).
 * 0xF00 to 0xFFF (256 bytes): reserved to display refresh.
 
 ```
@@ -28,7 +29,7 @@ This implementation divides the memory as following:
  |
  | (registers and stack)
  |
-'-' 0xE9F - start of reserved area to internal use
+'-' 0xEA0 - start of reserved area to internal use
  |
  |
  | (program code)

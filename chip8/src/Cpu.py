@@ -36,7 +36,7 @@ class Cpu:
         self.initialize()
 
     def initialize(self):
-        """ Initialize the registers
+        """ Initialize the registers.
 
         - `PC`: program counter of 16-bit
         - `SP`: stack pointer of 8-bit
@@ -56,36 +56,63 @@ class Cpu:
         self.memory.write_8bit(Cpu.REGISTER_DT_ADDRESS, 0x00)
         self.memory.write_8bit(Cpu.REGISTER_ST_ADDRESS, 0x00)
 
+    def start(self):
+        """ Start the CPU processing. """
+        # Steps:
+        # 1 - advance clock
+        # 2 - increase PC
+        # 3 - check interruption (DT)
+        # 4 - check ST to beep
+        while True:
+            # TODO: clock
+            self.step_pc()
+            self.check_dt()
+            self.check_beep()
+
+    def step_pc(self):
+        """ Increment PC by 2 bytes """
+        # TODO: check if has reached the limit
+        # TODO: check if is in even position
+        # TODO: increment PC
+        pass
+
+    def check_dt(self):
+        """ Check if DT needs to count down """
+        pass
+
+    def check_beep(self):
+        """ Check if needs to emit beep """
+        pass
 
     def is_valid_hexadecimal(self, value):
         return value >= 0 and value <= 0xF
 
-    def calculate_variable_register(self, register):
-        """ Return the memory position for the given register (0 to F) """
-        self.validate_variable_register(register)
-        return Memory.REGISTERS_DATA_START_ADDRESS + register
+    def validate_data_register(self, register):
+        """ Validate if the given register is a variable (hex 0 to F). """
 
-    def validate_allowed_address(self, address):
-        """ Validate if the given address is allowed to be accessed """
-
-        if address < Memory.PROGRAM_CODE_AREA_START or address > Memory.INTERPRETER_START_RESERVED_AREA:
-            raise Exception('Illegal memory access')
-
-    def validate_variable_register(self, register):
-        """ Validate if the given register is a variable (hex 0 to F) """
         if not self.is_valid_hexadecimal(register):
             raise Exception('Invalid register, use V0 to VE')
-        if register == 0xF:
-            raise Exception('Illegal access: reserved register')
+
+    def calculate_data_register_memory_address(self, register):
+        """ Return the memory position for the given register (0 to F). """
+
+        self.validate_data_register(register)
+        return Cpu.REGISTERS_DATA_START_ADDRESS + register
+
+    def validate_memory_access_address(self, address):
+        """ Validate if the given address is allowed to be accessed. """
+
+        if address < Cpu.PROGRAM_CODE_AREA_START or address >= Cpu.INTERPRETER_START_RESERVED_AREA:
+            raise Exception('Illegal memory access')
 
     def write_V(self, register, value):
         """ Store a value into one of registers V0-VF """
         # TODO: check if this can be on CPU
-        self.memory.write_8bit(this.calculate_variable_register(register), value)
+        self.memory.write_8bit(self.calculate_data_register_memory_address(register), value)
 
     def read_V(self, register):
         """ Read a value from one of registers V0-VF """
-        return self.memory.read(this.calculate_variable_register(register))
+        return self.memory.read_8bit(self.calculate_data_register_memory_address(register))
 
     def read_font(self, value):
         if not self.is_valid_hexadecimal(value):
@@ -109,30 +136,48 @@ class Cpu:
                 bits.insert(0, 0)
         return bits
 
-    def step_pc(self):
-        """ Increment PC by 2 bytes """
-        # TODO: check if has reached the limit
-        # TODO: check if is in even position
-        # TODO: increment PC
+    def write_register_pc(self, addr):
+        """ Set register `PC` to the given address. """
+
+        self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, addr)
+
+    def opcode_0NNN(self, addr):
+        """ Jump to a machine code routine at nnn.
+
+        This instruction is only used on the old computers on which Chip-8 was
+        originally implemented. It is ignored by modern interpreters.
+        """
+
         pass
 
-    def cycle_dt(self):
-        """ Check if DT needs to count down """
+    def opcode_00E0(self):
+        """ Clear the display. """
+
+        for addr in range(0xF00, 0xA000):
+            self.memory.write_8bit(addr, 0x0)
+
+    def opcode_00EE(self):
+        """ Return from a subroutine.
+
+        The interpreter sets the program counter to the address at the top of
+        the stack, then subtracts 1 from the stack pointer.
+        """
         pass
 
-    def check_beep(self):
-        """ Check if needs to emit beep """
-        pass
+    def opcode_1NNN(self, addr):
+        """ Jump to location NNN.
 
-    def start(self):
-        # Steps:
-        # 1 - advance clock
-        # 2 - increase PC
-        # 3 - check interruption (DT)
-        # 4 - check ST to beep
-        while True:
-            # TODO: clock
-            self.step_pc()
-            self.check_dt()
-            self.check_beep()
+        The interpreter sets the program counter to nnn.
+        """
+        self.validate_memory_access_address(addr)
+        self.write_register_pc(addr)
+
+    def opcode_2NNN(self, addr):
+        """ Call subroutine at NNN.
+
+        The interpreter increments the stack pointer, then puts the current PC
+        on the top of the stack. The PC is then set to nnn.
+        """
+
+        pass
 
