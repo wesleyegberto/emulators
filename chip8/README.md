@@ -14,13 +14,13 @@ This implementation divides the memory as following:
   * 0x000 to 0x050: builtin fonts for hexadecimal digits (0 to F) of 5 bytes long (8x5 pixels)
 * 0x200 to 0xE9F (3,232 bytes): memory to program code;
 * 0xEA0 to 0xEFF (96 bytes): memory reserved internal user:
-  * 0xEA0 to 0xECF (48 bytes): stack;
-  * 0xEC0 to 0xEBF (47 bytes): registers (`I`, `PC`, `SP`, `DT`, `ST`, `V0` to `VF`):
+  * 0xEA0 to 0xEBF (32 bytes): stack;
+  * 0xED0 to 0xEEF (47 bytes): registers (`I`, `PC`, `SP`, `DT`, `ST`, `V0` to `VF`):
     * 0xED0: register `PC`
-    * 0xED1: register `SP`
     * 0xED2: register `I`
-    * 0xED3: register `DT`
-    * 0xED4: register `ST`
+    * 0xED4: register `SP`
+    * 0xED5: register `DT`
+    * 0xED6: register `ST`
   * 0xEF0 to 0xEFF (16 bytes): data registers (from `V0` to `VF`).
 * 0xF00 to 0xFFF (256 bytes): reserved to display refresh.
 
@@ -47,10 +47,10 @@ This implementation divides the memory as following:
 ## TODO
 
 * [ ] CPU
+    * [x] Handle `SP`
+    * [x] Handle `V0` to `VF`
     * [ ] Handle `PC`
-    * [ ] Handle `SP`
     * [ ] Handle `I`
-    * [ ] Handle `V0` to `VF`
     * [ ] Handle `DT`
     * [ ] Handle `ST`
     * [ ] Implement cycle
