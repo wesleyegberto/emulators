@@ -15,7 +15,7 @@ This implementation divides the memory as following:
 * 0x200 to 0xE9F (3,232 bytes): memory to program code;
 * 0xEA0 to 0xEFF (96 bytes): memory reserved internal user:
   * 0xEA0 to 0xEBF (32 bytes): stack;
-  * 0xED0 to 0xEEF (47 bytes): registers (`I`, `PC`, `SP`, `DT`, `ST`, `V0` to `VF`):
+  * 0xED0 to 0xEEF (32 bytes): registers (`I`, `PC`, `SP`, `DT`, `ST`, `V0` to `VF`):
     * 0xED0: register `PC`
     * 0xED2: register `I`
     * 0xED4: register `SP`
@@ -40,8 +40,9 @@ This implementation divides the memory as following:
  |
  |  (reserved to Chip8 interpreter code)
  |
+'-' 0x81 - interpreter reserved memory start
  |
-'-' 0x00 - interpreter reserved memory start
+'-' 0x00 - builtin font reserved memory start
 ```
 
 ## TODO
