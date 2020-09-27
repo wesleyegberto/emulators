@@ -2,13 +2,13 @@
 
 Chip8 emulator implemented in Python 3.
 
-It implements a VIPs with the original 36 instructions and with 4 KB of memory.
+It implements a COSMIC VIP with the original 36 instructions and with 4 KB of memory.
 
 ## Architecture
 
 ### Memory
 
-This implementation divides the memory as following:
+This COSMIC VIP implementation divides the memory as following:
 
 * 0x00 to 0x1FF (512 bytes): reserved to Chip8 implementation (here is empty, maybe I will put the actually code available [here](https://archive.org/details/bitsavers_rcacosmacCManual1978_6956559/page/n35/mode/2up)):
   * 0x000 to 0x050: builtin fonts for hexadecimal digits (0 to F) of 5 bytes long (8x5 pixels)
@@ -45,6 +45,10 @@ This implementation divides the memory as following:
 '-' 0x00 - builtin font reserved memory start
 ```
 
+## Notes about COSMIC VIP implementation
+
+* Instructions `8XY6` and `8XYE` use `VY`, see [here](https://github.com/Chromatophore/HP48-Superchip#8xy6--8xye-aka-x--y-x--y).
+
 ## TODO
 
 * [ ] CPU
@@ -66,13 +70,15 @@ This implementation divides the memory as following:
 ## Links
 
 * [Study of the techniques for emulation programming](http://www.codeslinger.co.uk/files/emu.pdf)
+* [Unified Chip8 Documentation (Best one)](https://github.com/trapexit/chip-8_documentation)
 * [Wiki](https://en.wikipedia.org/wiki/CHIP-8)
-* [History](http://vanbeveren.byethost13.com/stuff/CHIP8.pdf?i=1)
 * [Cowgod's Chip8 Technical Reference](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#0.0)
 * [Mastering Chip8](http://mattmik.com/files/chip8/mastering/chip8.html)
-* [Doc Chip8](https://github.com/trapexit/chip-8_documentation)
+* [Programming in Chip-8 - EIT ed Nov 1981](https://archive.org/stream/ETIA1981/ETI%201981-11%20November#page/n113/mode/2up))
+* [Doc with Interesting Comments](https://github.com/Chromatophore/HP48-Superchip)
 * [Chip8 Technical Reference](https://github.com/mattmikolay/chip-8/wiki/CHIP%E2%80%908-Technical-Reference)
 * [Emulating Chip8 System](http://www.codeslinger.co.uk/pages/projects/chip8.html)
-* [Octo IDE - High level assembler for Chip8 VM](https://github.com/JohnEarnest/Octo)
 * [Chip8 Classic Manual](https://storage.googleapis.com/wzukusers/user-34724694/documents/5c83d6a5aec8eZ0cT194/CHIP-8%20Classic%20Manual%20Rev%201.3.pdf)
+* [Chip8 Emulator](http://vanbeveren.byethost13.com/stuff/CHIP8.pdf)
+* [Octo IDE - High level assembler for Chip8 VM](https://github.com/JohnEarnest/Octo)
 

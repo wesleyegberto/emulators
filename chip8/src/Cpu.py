@@ -71,9 +71,12 @@ class Cpu:
 
     def step_pc(self):
         """ Increment PC by 2 bytes """
-        # TODO: check if has reached the limit
+
+        pc_value = self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS)
+        pc_value = pc_value + 0x2
+        self.validate_memory_access_address(pc_value)
         # TODO: check if is in even position
-        # TODO: increment PC
+        self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, pc_value)
         pass
 
     def check_dt(self):
@@ -140,8 +143,11 @@ class Cpu:
 
     def write_V(self, register, value):
         """ Store a value into one of registers V0-VF """
-        # TODO: check if this can be on CPU
         self.memory.write_8bit(self.calculate_data_register_memory_address(register), value)
+
+    def write_flag(self, value):
+        """ Store a value into register flag VF """
+        self.memory.write_8bit(Cpu.REGISTER_DATA_VF, value)
 
     def read_V(self, register):
         """ Read a value from one of registers V0-VF """
@@ -219,3 +225,166 @@ class Cpu:
         self.push_address_into_stack(current_addr)
         self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, addr)
 
+    def opcode_3XKK(self, x, kk):
+        """ Skip next instruction if VX == KK.
+
+        The interpreter compares register Vx to kk, and if they are equal,
+        increments the program counter by 2.
+        """
+        kk = kk & 0xFF
+        if self.read_V(x) is kk:
+            self.step_pc()
+
+    def opcode_4XKK(self, x, kk):
+        """ Skip next instruction if VX != KK.
+
+        The interpreter compares register Vx to kk, and if they are not equal,
+        increments the program counter by 2.
+        """
+        kk = kk & 0xFF
+        if self.read_V(x) is not kk:
+            self.step_pc()
+
+    def opcode_5XY0(self, x, y):
+        """ Skip next instruction if VX = VY.
+
+        The interpreter compares register Vx to register Vy, and if they are
+        equal, increments the program counter by 2.
+        """
+        if self.read_V(x) is self.read_V(y):
+            self.step_pc()
+
+    def opcode_6XKK(self, x, kk):
+        """ Set VX = KK.
+
+        The interpreter puts the value kk into register Vx.
+        """
+        self.write_V(x, kk)
+
+    def opcode_7XKK(self, x, kk):
+        """ Set VX = VX + KK.
+
+        Adds the value kk to the value of register VX, then stores the result in VX.
+        """
+        x_value = self.read_V(x)
+        kk = kk & 0xFF
+        self.write_V(x, x_value + kk)
+
+    def opcode_8XY0(self, x, y):
+        """ Set VX = VY.
+
+        Stores the value of register VY in register VX.
+        """
+        y_value = self.read_V(y)
+        self.write_V(x, y_value)
+
+    def opcode_8XY1(self, x, y):
+        """ Set Vx = Vx OR Vy.
+
+        Performs a bitwise OR on the values of Vx and Vy, then stores the result in Vx.
+        A bitwise OR compares the corrseponding bits from two values, and if either bit
+        is 1, then the same bit in the result is also 1. Otherwise, it is 0.
+        """
+        x_value = self.read_V(x)
+        y_value = self.read_V(y)
+        self.write_V(x, x_value | y_value)
+
+    def opcode_8XY2(self, x, y):
+        """ Set VX = VX AND VY.
+
+        Performs a bitwise AND on the values of VX and VY, then stores the result in VX.
+        A bitwise AND compares the corrseponding bits from two values, and if both bits are
+        1, then the same bit in the result is also 1. Otherwise, it is 0.
+        """
+        x_value = self.read_V(x)
+        y_value = self.read_V(y)
+        self.write_V(x, x_value & y_value)
+
+    def opcode_8XY3(self, x, y):
+        """ Set VX = VX XOR VY.
+
+        Performs a bitwise exclusive OR on the values of VX and VY, then stores the result
+        in VX. An exclusive OR compares the corrseponding bits from two values, and if the
+        bits are not both the same, then the corresponding bit in the result is set to 1.
+        Otherwise, it is 0.
+        """
+        x_value = self.read_V(x)
+        y_value = self.read_V(y)
+        self.write_V(x, x_value ^ y_value)
+
+    def opcode_8XY4(self, x, y):
+        """ Set VX = VX + VY, set VF = carry.
+
+        The values of VX and VY are added together. If the result is greater than 8 bits
+        (i.e., > 255,) VF is set to 1, otherwise 0. Only the lowest 8 bits of the result are
+        kept, and stored in VX.
+        """
+        x_value = self.read_V(x)
+        y_value = self.read_V(y)
+        result = x_value + y_value
+
+        self.write_V(x, result)
+        # set the carry flag (1 for carry used)
+        self.write_flag(result > 0xFF)
+
+    def opcode_8XY5(self, x, y):
+        """ Set VX = VX - VY, set VF = NOT borrow.
+
+        If VX > VY, then VF is set to 1, otherwise 0. Then VY is subtracted from VX, and
+        the results stored in VX.
+        """
+        x_value = self.read_V(x)
+        y_value = self.read_V(y)
+
+        self.write_V(x, x_value - y_value)
+        # set the borrow flag (1 for not borrow)
+        if x_value > y_value:
+            self.write_flag(1)
+        else:
+            self.write_flag(0)
+
+    def opcode_8XY6(self, x, y):
+        """ Set VX = VY >> 1.
+
+        If the least-significant bit of VY is 1, then VF is set to 1, otherwise 0.
+        Then VY is divided by 2.
+        """
+        y_value = self.read_V(y)
+        self.write_V(x, y_value >> 1)
+        self.write_flag(y_value % 2)
+
+    def opcode_8XY7(self, x, y):
+        """ Set VX = VY - VX, set VF = NOT borrow.
+
+        If VY > VX, then VF is set to 1, otherwise 0. Then VX is subtracted from VY, and
+        the results stored in VX.
+        """
+        x_value = self.read_V(x)
+        y_value = self.read_V(y)
+
+        self.write_V(x, y_value - x_value)
+        # set the borrow flag (1 for not borrow)
+        if y_value > x_value:
+            self.write_flag(1)
+        else:
+            self.write_flag(0)
+
+    def opcode_8XYE(self, x, y):
+        """ Set VX = VY << 1.
+
+        If the most-significant bit of VY is 1, then VF is set to 1, otherwise to 0.
+        Then VY is multiplied by 2.
+        """
+        y_value = self.read_V(y)
+        result = y_value << 1
+        self.write_V(x, result)
+        self.write_flag(result > 0xFF)
+
+    def opcode_9XY0(self, x, y):
+        """ Skip next instruction if VX != VY.
+
+        The values of VX and VY are compared, and if they are not equal, the program
+        counter is increased by 2.
+        """
+        if self.read_V(x) is not self.read_V(y):
+            self.step_pc()

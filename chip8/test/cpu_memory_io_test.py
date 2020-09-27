@@ -79,3 +79,18 @@ class CpuTestCase(unittest.TestCase):
         self.assertEqual(popped_address, 0x202)
         self.assertEqual(self.memory.read_8bit(Cpu.REGISTER_SP_ADDRESS), 0x2)
 
+    def test_pc_register_increment(self):
+        self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, 0x200)
+
+        self.cpu.step_pc()
+
+        self.assertEqual(self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS), 0x202)
+
+    def test_pc_register_increments(self):
+        self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, 0x200)
+
+        self.cpu.step_pc()
+        self.cpu.step_pc()
+
+        self.assertEqual(self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS), 0x204)
+
