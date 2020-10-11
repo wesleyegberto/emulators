@@ -1,5 +1,9 @@
 from matplotlib import pyplot as plt
+import time
+import random
+
 from Memory import Memory
+from Keyboard import Keyboard
 
 class Cpu:
     """ CPU with registers and cycles """
@@ -22,6 +26,7 @@ class Cpu:
     REGISTER_SP_ADDRESS = 0xED4 # 8-bit
     REGISTER_DT_ADDRESS = 0xED5 # 8-bit
     REGISTER_ST_ADDRESS = 0xED6 # 8-bit
+    REGISTER_RANDOM_NUMBER = 0xED9 # 8-bit
 
     # data registers start memory position: 0xEF0 + V (where V is a variable from V0 to VF)
     REGISTERS_DATA_START_ADDRESS = 0xEF0
@@ -32,6 +37,7 @@ class Cpu:
 
     def __init__(self):
         self.memory = Memory()
+        self.keyboard = Keyboard()
 
         self.initialize()
 
@@ -388,3 +394,138 @@ class Cpu:
         """
         if self.read_V(x) is not self.read_V(y):
             self.step_pc()
+
+    def opcode_ANNN(self, addr):
+        """ Set I = NNN.
+
+        The value of register I is set to NNN.
+        """
+        self.validate_memory_access_address(addr)
+        self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, addr)
+
+    def opcode_BNNN(self, addr):
+        """
+        Jump to location NNN + V0.
+
+        The program counter is set to NNN Plus the value of V0.
+        """
+        v0_value = self.read_V(0x0)
+        addr = addr + (v0_value * 2) # double as PC uses 2-bytes
+        self.validate_memory_access_address(addr)
+        self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, addr)
+
+    def opcode_CXKK(self, x, k):
+        """
+        Set Vx = random byte AND kk.
+
+        The interpreter generates a random number from 0 to 255, which is then
+        ANDed with the value KK. The results are stored in VX.
+        """
+        random_value = random.randint(0, 0xFF) & k
+        self.memory.write_8bit(Cpu.REGISTER_RANDOM_NUMBER, random_value)
+        self.write_V(x, random_value)
+
+    def opcode_DXYN(self, x, y, n):
+        pass
+
+    def opcode_EX9E(self, x):
+        """ Skip next instruction if key with the value of VX is pressed.
+
+        Checks the keyboard, and if the key corresponding to the value of VX
+        is currently in the down position, PC is increased by 2.
+        """
+        key_pressed = self.keyboard.read_key()
+        x_value = self.read_V(x)
+
+        if key_pressed is x_value:
+            self.step_pc()
+
+    def opcode_EXA1(self, x):
+        """ Skip next instruction if key with the value of VX is not pressed.
+
+        Checks the keyboard, and if the key corresponding to the value of VX
+        is currently in the up position, PC is increased by 2.
+        """
+        key_pressed = self.keyboard.read_key()
+        x_value = self.read_V(x)
+
+        if key_pressed is not x_value:
+            self.step_pc()
+
+    def opcode_FX07(self, x):
+        """ Set VX = delay timer value.
+
+        The value of DT is placed into VX.
+        """
+        dt_value = self.memory.read_8bit(Cpu.REGISTER_DT_ADDRESS)
+        self.write_V(x, dt_value)
+
+    def opcode_FX0A(self, x):
+        """ Wait for a key press, store the value of the key in VX.
+
+        All execution stops until a key is pressed, then the value of that key
+        is stored in VX.
+        """
+        key_pressed = None
+        while key_pressed is None:
+            time.sleep(0.200)
+            key_pressed = self.keyboard.read_key()
+        self.write_V(x, key_pressed)
+
+    def opcode_FX15(self, x):
+        """ Set delay timer = VX.
+
+        DT is set equal to the value of VX.
+        """
+        x_value = self.read_V(x)
+        self.memory.write_8bit(Cpu.REGISTER_DT_ADDRESS, x_value)
+
+    def opcode_FX18(self, x):
+        """ Set sound timer = VX.
+
+        ST is set equal to the value of VX.
+        """
+        x_value = self.read_V(x)
+        self.memory.write_8bit(Cpu.REGISTER_ST_ADDRESS, x_value)
+
+    def opcode_FX1E(self, x):
+        """ Set I = I + VX.
+
+        The values of I and VX are added, and the results are stored in I.
+        """
+        x_value = self.read_V(x)
+        I_value = self.memory.read_16bit(Cpu.REGISTER_I_ADDRESS)
+        new_address = x_value + I_value
+        self.validate_memory_access_address(new_address)
+        self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, new_address)
+
+    def opcode_FX29(self, x):
+        """ Set I = location of sprite for digit VX.
+
+        The value of I is set to the location for the hexadecimal sprite
+        corresponding to the value of VX. See section 2.4, Display, for more
+        information on the Chip-8 hexadecimal font.
+        """
+        x_value = self.read_V(x)
+
+        # multiply by the sprite length to offset to start
+        sprite_address = (x_value & 0xFF) * 0x5
+
+        self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, sprite_address)
+
+    def opcode_FX33(self, x):
+        """ Store BCD representation of VX in memory locations I, I+1, and I+2.
+
+        The interpreter takes the decimal value of VX, and places the hundreds
+        digit in memory at location in I, the tens digit at location I+1,
+        and the ones digit at location I+2.
+        COSMAC VIP doesn't change register I.
+        """
+        x_value = self.read_V(x)
+        self.memory.write_8bit(Cpu.REGISTER_I_ADDRESS, 0)
+
+    def opcode_FX55(self):
+        pass
+
+    def opcode_FX65(self):
+        pass

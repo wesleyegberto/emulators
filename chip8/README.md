@@ -6,21 +6,27 @@ It implements a COSMIC VIP with the original 36 instructions and with 4 KB of me
 
 ## Architecture
 
+### CPU
+
+Instructions are 16-bit long.
+
 ### Memory
 
-This COSMIC VIP implementation divides the memory as following:
+This [COSMIC VIP](https://github.com/Chromatophore/HP48-Superchip/blob/master/investigations/quirk_memlimit.md) implementation divides the memory as following:
 
 * 0x00 to 0x1FF (512 bytes): reserved to Chip8 implementation (here is empty, maybe I will put the actually code available [here](https://archive.org/details/bitsavers_rcacosmacCManual1978_6956559/page/n35/mode/2up)):
   * 0x000 to 0x050: builtin fonts for hexadecimal digits (0 to F) of 5 bytes long (8x5 pixels)
 * 0x200 to 0xE9F (3,232 bytes): memory to program code;
 * 0xEA0 to 0xEFF (96 bytes): memory reserved internal user:
   * 0xEA0 to 0xEBF (32 bytes): stack;
-  * 0xED0 to 0xEEF (32 bytes): registers (`I`, `PC`, `SP`, `DT`, `ST`, `V0` to `VF`):
+  * 0xED0 to 0xEEF (32 bytes): registers (`I`, `PC`, `SP`, `DT`, `ST`):
     * 0xED0: register `PC`
     * 0xED2: register `I`
     * 0xED4: register `SP`
     * 0xED5: register `DT`
     * 0xED6: register `ST`
+    * 0xED9: random number
+    * Note: this address was defined by manual intepretention (see COSMAC VIP Instruction Manual p 15).
   * 0xEF0 to 0xEFF (16 bytes): data registers (from `V0` to `VF`).
 * 0xF00 to 0xFFF (256 bytes): reserved to display refresh.
 
@@ -54,8 +60,8 @@ This COSMIC VIP implementation divides the memory as following:
 * [ ] CPU
     * [x] Handle `SP`
     * [x] Handle `V0` to `VF`
-    * [ ] Handle `PC`
-    * [ ] Handle `I`
+    * [x] Handle `PC`
+    * [x] Handle `I`
     * [ ] Handle `DT`
     * [ ] Handle `ST`
     * [ ] Implement cycle
@@ -81,4 +87,6 @@ This COSMIC VIP implementation divides the memory as following:
 * [Chip8 Classic Manual](https://storage.googleapis.com/wzukusers/user-34724694/documents/5c83d6a5aec8eZ0cT194/CHIP-8%20Classic%20Manual%20Rev%201.3.pdf)
 * [Chip8 Emulator](http://vanbeveren.byethost13.com/stuff/CHIP8.pdf)
 * [Octo IDE - High level assembler for Chip8 VM](https://github.com/JohnEarnest/Octo)
+* [COSMAC VIP Instruction Manual](https://archive.org/details/bitsavers_rcacosmacCManual1978_6956559/page/n1/mode/2up)
+* [DREAM 6800 Manual](https://archive.org/stream/EA1979/EA%201979-05%20May#page/n85/mode/2up)
 
