@@ -510,5 +510,42 @@ class CpuTestCase(unittest.TestCase):
         self.assert_memory_address_8bit_value(Cpu.REGISTER_I_ADDRESS + 1, 0x4)
         self.assert_memory_address_8bit_value(Cpu.REGISTER_I_ADDRESS + 2, 0x2)
         # COSMAC VIP doesn't change I
-        self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, 0x500)
+        self.assert_memory_address_16bit_value(Cpu.REGISTER_I_ADDRESS, 0x500)
+
+    def test_opcode_FX55_should_copy_data_registers_values_into_memory(self):
+        self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, 0x700)
+        self.cpu.write_V(0x0, 0xAA)
+        self.cpu.write_V(0x1, 0xBB)
+        self.cpu.write_V(0x2, 0xCC)
+        self.cpu.write_V(0x3, 0x19)
+        self.cpu.write_V(0x4, 0x20)
+
+        self.cpu.opcode_FX55(0x4)
+
+        addr = self.memory.read_16bit(Cpu.REGISTER_I_ADDRESS)
+        self.assert_memory_address_8bit_value(addr, 0xAA)
+        self.assert_memory_address_8bit_value(addr + 1, 0xBB)
+        self.assert_memory_address_8bit_value(addr + 2, 0xCC)
+        self.assert_memory_address_8bit_value(addr + 3, 0x19)
+        self.assert_memory_address_8bit_value(addr + 4, 0x20)
+        # COSMAC VIP doesn't change I
+        self.assert_memory_address_16bit_value(Cpu.REGISTER_I_ADDRESS, 0x700)
+
+    def test_opcode_FX65_should_copy_range_memory_value_into_data_registers(self):
+        self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, 0x700)
+        self.memory.write_8bit(0x700, 0xAA)
+        self.memory.write_8bit(0x701, 0xBB)
+        self.memory.write_8bit(0x702, 0xCC)
+        self.memory.write_8bit(0x703, 0x19)
+        self.memory.write_8bit(0x704, 0x20)
+
+        self.cpu.opcode_FX65(0x4)
+
+        self.assert_data_register_value(0x0, 0xAA)
+        self.assert_data_register_value(0x1, 0xBB)
+        self.assert_data_register_value(0x2, 0xCC)
+        self.assert_data_register_value(0x3, 0x19)
+        self.assert_data_register_value(0x4, 0x20)
+        # COSMAC VIP doesn't change I
+        self.assert_memory_address_16bit_value(Cpu.REGISTER_I_ADDRESS, 0x700)
 

@@ -83,7 +83,6 @@ class Cpu:
         self.validate_memory_access_address(pc_value)
         # TODO: check if is in even position
         self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, pc_value)
-        pass
 
     def check_dt(self):
         """ Check if DT needs to count down """
@@ -100,7 +99,13 @@ class Cpu:
         """ Validate if the given register is a variable (hex 0 to F). """
 
         if not self.is_valid_hexadecimal(register):
-            raise Exception('Invalid register, use V0 to VE')
+            raise Exception('Invalid register, use V0 to VF')
+
+    def validate_memory_access_address(self, address):
+        """ Validate if the given address is allowed to be accessed. """
+
+        if address < Cpu.PROGRAM_CODE_AREA_START or address >= Cpu.INTERPRETER_START_RESERVED_AREA:
+            raise Exception('Illegal memory access: %s' % hex(address))
 
     def calculate_data_register_memory_address(self, register):
         """ Return the memory position for the given register (0 to F). """
@@ -140,12 +145,6 @@ class Cpu:
             raise Exception('Stack overflow')
 
         self.memory.write_16bit(stack_addr, addr)
-
-    def validate_memory_access_address(self, address):
-        """ Validate if the given address is allowed to be accessed. """
-
-        if address < Cpu.PROGRAM_CODE_AREA_START or address >= Cpu.INTERPRETER_START_RESERVED_AREA:
-            raise Exception('Illegal memory access')
 
     def write_V(self, register, value):
         """ Store a value into one of registers V0-VF """
@@ -426,7 +425,7 @@ class Cpu:
         self.write_V(x, random_value)
 
     def opcode_DXYN(self, x, y, n):
-        pass
+        raise Exception("Not implemented")
 
     def opcode_EX9E(self, x):
         """ Skip next instruction if key with the value of VX is pressed.
@@ -523,9 +522,22 @@ class Cpu:
         """
         x_value = self.read_V(x)
         self.memory.write_8bit(Cpu.REGISTER_I_ADDRESS, 0)
+        self.memory.write_8bit(Cpu.REGISTER_I_ADDRESS + 1, 0)
+        self.memory.write_8bit(Cpu.REGISTER_I_ADDRESS + 2, 0)
 
-    def opcode_FX55(self):
-        pass
+    def opcode_FX55(self, x):
+        addr = self.memory.read_16bit(Cpu.REGISTER_I_ADDRESS)
+        for i in range(0, x + 1):
+            self.validate_memory_access_address(addr)
+            value = self.read_V(i)
+            self.memory.write_8bit(addr, value)
+            addr = addr + 1
 
-    def opcode_FX65(self):
-        pass
+    def opcode_FX65(self, x):
+        addr = self.memory.read_16bit(Cpu.REGISTER_I_ADDRESS)
+        for i in range(0, x + 1):
+            self.validate_memory_access_address(addr)
+            value = self.memory.read_8bit(addr)
+            self.write_V(i, value)
+            addr = addr + 1
+
