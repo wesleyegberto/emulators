@@ -7,7 +7,7 @@ class Memory:
     def __init__(self):
         """ Initialize the memory with 0x000
 
-        Initialize the builtin fonts
+        Initialize the builtin fonts from 0x000 to 0x0080
         """
 
         self.memory = [0] * 4096

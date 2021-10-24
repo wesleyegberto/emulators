@@ -506,9 +506,10 @@ class CpuTestCase(unittest.TestCase):
 
         self.cpu.opcode_FX33(0xD)
 
-        self.assert_memory_address_8bit_value(Cpu.REGISTER_I_ADDRESS, 0x2)
-        self.assert_memory_address_8bit_value(Cpu.REGISTER_I_ADDRESS + 1, 0x4)
-        self.assert_memory_address_8bit_value(Cpu.REGISTER_I_ADDRESS + 2, 0x2)
+        addr = self.memory.read_16bit(Cpu.REGISTER_I_ADDRESS)
+        self.assert_memory_address_8bit_value(addr, 0x2)
+        self.assert_memory_address_8bit_value(addr + 1, 0x4)
+        self.assert_memory_address_8bit_value(addr + 2, 0x2)
         # COSMAC VIP doesn't change I
         self.assert_memory_address_16bit_value(Cpu.REGISTER_I_ADDRESS, 0x500)
 

@@ -160,13 +160,13 @@ class Cpu:
 
     def read_font(self, value):
         if not self.is_valid_hexadecimal(value):
-            raise Exception('Invalid font, please choose between hex 0 and F')
+            raise Exception('Invalid font, please choose between hex 0x0 and 0xF')
         # offset to skip the unwanted positions (hex * sprite length)
         offset = value * 5
         return self.memory.read_range(offset, 5)
 
     def plot_char(self, value):
-        """ Plots the builtin font (0 to F) """
+        """ Plots the builtin font (0x0 to 0xF) """
 
         char = self.read_font(value)
         sprite = [self.bitfield(val) for val in char]
@@ -521,9 +521,10 @@ class Cpu:
         COSMAC VIP doesn't change register I.
         """
         x_value = self.read_V(x)
-        self.memory.write_8bit(Cpu.REGISTER_I_ADDRESS, 0)
-        self.memory.write_8bit(Cpu.REGISTER_I_ADDRESS + 1, 0)
-        self.memory.write_8bit(Cpu.REGISTER_I_ADDRESS + 2, 0)
+        addr = self.memory.read_16bit(Cpu.REGISTER_I_ADDRESS)
+        self.memory.write_8bit(addr, x_value // 100)
+        self.memory.write_8bit(addr + 1, x_value // 10 % 10)
+        self.memory.write_8bit(addr + 2, x_value % 10)
 
     def opcode_FX55(self, x):
         addr = self.memory.read_16bit(Cpu.REGISTER_I_ADDRESS)
