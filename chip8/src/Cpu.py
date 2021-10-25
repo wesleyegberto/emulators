@@ -34,6 +34,8 @@ class Cpu:
     REGISTER_DATA_VF = 0xEFF
 
     DISPLAY_RESERVED_START_ADDRESS = 0xF00
+    DISPLAY_RESERVED_END_ADDRESS = 0xFFF
+    DISPLAY_ROW_WIDTH_OFFSET = 64 // 8 # 8 bytes by row
 
     def __init__(self):
         self.memory = Memory()
@@ -57,10 +59,13 @@ class Cpu:
         self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, Cpu.PROGRAM_CODE_AREA_START)
 
         # stack points start at reserved memory address
-        self.memory.write_8bit(Cpu.REGISTER_SP_ADDRESS, 0x00)
+        self.memory.write_8bit(Cpu.REGISTER_SP_ADDRESS, self.STACK_START_ADDRESS)
 
         self.memory.write_8bit(Cpu.REGISTER_DT_ADDRESS, 0x00)
         self.memory.write_8bit(Cpu.REGISTER_ST_ADDRESS, 0x00)
+
+        # clear the screen
+        self.opcode_00E0()
 
     def start(self):
         """ Start the CPU processing. """
@@ -198,7 +203,7 @@ class Cpu:
     def opcode_00E0(self):
         """ Clear the display. """
 
-        for addr in range(0xF00, 0xFFF):
+        for addr in range(self.DISPLAY_RESERVED_START_ADDRESS, self.DISPLAY_RESERVED_END_ADDRESS):
             self.memory.write_8bit(addr, 0x0)
 
     def opcode_00EE(self):
@@ -424,8 +429,24 @@ class Cpu:
         self.memory.write_8bit(Cpu.REGISTER_RANDOM_NUMBER, random_value)
         self.write_V(x, random_value)
 
-    def opcode_DXYN(self, x, y, n):
-        raise Exception("Not implemented")
+    def opcode_DXYN(self, x, y, nibble):
+        """ Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision.
+
+        The interpreter reads n bytes from memory (indicates the heigh of the sprite), starting at the address stored in I.
+        These bytes are then displayed as sprites on screen at coordinates (Vx, Vy).
+        Sprites are XORed onto the existing screen. If this causes any pixels to be erased, VF is set to 1, otherwise it is set to 0.
+        If the sprite is positioned so part of it is outside the coordinates of the display, it wraps around to the opposite side of the screen.
+        """
+
+        addr = self.memory.read_16bit(Cpu.REGISTER_I_ADDRESS)
+        # TODO: read 8 bit and split
+
+        for l in range(0, nibble):
+            line_offset = (y + l) * self.DISPLAY_ROW_WIDTH_OFFSET + x
+            display_addr = self.DISPLAY_RESERVED_START_ADDRESS + line_offset
+            if display_addr > self.DISPLAY_RESERVED_END_ADDRESS:
+                raise Exception('Memory out of display: %s' % hex(display_addr))
+            self.memory.write_8bit(display_addr, 0x1)
 
     def opcode_EX9E(self, x):
         """ Skip next instruction if key with the value of VX is pressed.
