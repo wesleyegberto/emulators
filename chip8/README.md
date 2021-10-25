@@ -65,7 +65,7 @@ This [COSMIC VIP](https://github.com/Chromatophore/HP48-Superchip/blob/master/in
 ```
 '-' 0xFFF - end of memory
  |
- | (registers and stack)
+ | (registers, stack and display area)
  |
 '-' 0xEA0 - start of reserved area to internal use
  |
@@ -85,12 +85,39 @@ This [COSMIC VIP](https://github.com/Chromatophore/HP48-Superchip/blob/master/in
 
 ### Display
 
-Chip-8 language used a 64x32 pixel monochrome display, with the format of MxN (M going from 0 to 63 and N going from 0 to 31).
+The implementation can be created from [RCA COSMAC VIP CDP18S711 Instruction Manual](./docs/RCA COSMAC VIP CDP18S711 Instruction Manual.pdf), page 13.
 
-Chip-8 draws graphics on screen through the use of sprites.  A sprite is a group of bytes which are a binary representation of the desired picture.
-Sprites may be up to 15 bytes, for a possible sprite size of 8x15.
+Chip-8 language used a 64x32 pixel monochrome display and it draws graphics on screen through the use of sprites.
+A sprite is a group of bytes which are a binary representation of the desired picture.
+Sprites may be up to 15 bytes (1 byte wide and t most 5 bytes high), for a possible sprite size of 8x15.
 
-Programs may also refer to a group of sprites representing the hexadecimal digits 0 through F. These sprites are 5 bytes long, or 8x5 pixels.
+The sprite is positioned at screen with the format of MxN:
+
+- M going from 0x0 to 0x3F
+- N going from 0x0 to 0x1F
+
+The pixels to be shown are defined in the last 256 bytes section of the RAM (from 0xEFF to 0xFFF).
+The pixels are defined by each RAM position:
+
+- 1 bit represents a white spot
+- 0 bit represents a dark spot
+
+Example of program to show the "8" pattern at the top left part of the screen:
+
+> How to read: `<Opcode_Memory> <Opcode> <Comment>`
+> - Memory: memory location at which the instruction bytes in the second column is stored
+> - Opcode: Instruction opcode with its arguments
+
+```
+0200 A20A I=020A
+0202 6100 V1=00
+0204 6200 V2=00
+0206 D125 SHOW 5MI@V1V2
+0208 1208 GO 0208, keeps looping
+020A F090 # sprite's line 1 and 2
+020C F090 # sprite's line 3 and 4
+020E F000 # sprite's line 5
+```
 
 ## Notes about COSMIC VIP implementation
 
