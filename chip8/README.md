@@ -4,13 +4,45 @@ Chip8 emulator implemented in Python 3.
 
 It implements a COSMIC VIP with the original 36 instructions and with 4 KB of memory.
 
+This documentation was built, mostly, from [Cowgod's documentation](http://devernay.free.fr/hacks/chip8).
+
+## What is Chip-8?
+
+From [Cowgod's website](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#1.0):
+
+>Chip-8 is a simple, interpreted, programming language which was first used on some do-it-yourself computer systems in the late 1970s and early 1980s.
+>The COSMAC VIP, DREAM 6800, and ETI 660 computers are a few examples. These computers typically were designed to use a television as a display,
+>had between 1 and 4K of RAM, and used a 16-key hexadecimal keypad for input.
+>The interpreter took up only 512 bytes of memory, and programs, which were entered into the computer in hexadecimal, were even smaller.
+>
+>In the early 1990s, the Chip-8 language was revived by a man named Andreas Gustafsson. He created a Chip-8 interpreter for the HP48 graphing calculator,
+>called Chip-48. The HP48 was lacking a way to easily make fast games at the time, and Chip-8 was the answer.
+>Chip-48 later begat Super Chip-48, a modification of Chip-48 which allowed higher resolution graphics, as well as other graphical enhancements.
+>
+>Chip-48 inspired a whole new crop of Chip-8 interpreters for various platforms, including MS-DOS, Windows 3.1, Amiga, HP48, MSX, Adam, and ColecoVision."
+
 ## Architecture
 
 ### CPU
 
-Instructions are 16-bit long.
+The original implementation of the Chip-8 language includes 36 different instructions, including math, graphics, and flow control functions.
+All instructions are 2 bytes long and are stored most-significant-byte first. In memory, the first byte of each instruction should be located at an even addresses.
+If a program includes sprite data, it should be padded so any instructions following it will be properly situated in RAM.
 
 ### Memory
+
+Chip-8 many registers, detailed [here](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#2.2):
+
+* 16 general purpose 8-bit registers, referred to as `VX` where `X` is a hexadecimal digit (0 through F);
+  * `VF` should not be used by any program, as it is also used as a flag by some instructions.
+* 16-bit register called `I` used to store memory addresses in some instructions, so only the lowest (rightmost) 12 bits are usually used;
+* two special 8-bit regsiters for the delay and sound timers:
+  * whhen they are non-zero, they are automatically decremented at a rate of 60Hz.
+* internal registers:
+  * `PC`: 16-bit register used as program counter to store the currently executing address;
+  * `SP`: 8-bit register used as stack pointer to point to the topmost level of the stack.
+* stack is an array of 16 16-bit values used to store the address that the interpreter should return to when finished with a subroutine.
+
 
 This [COSMIC VIP](https://github.com/Chromatophore/HP48-Superchip/blob/master/investigations/quirk_memlimit.md) implementation divides the memory as following:
 
@@ -51,6 +83,15 @@ This [COSMIC VIP](https://github.com/Chromatophore/HP48-Superchip/blob/master/in
 '-' 0x00 - builtin font reserved memory start
 ```
 
+### Display
+
+Chip-8 language used a 64x32 pixel monochrome display, with the format of MxN (M going from 0 to 63 and N going from 0 to 31).
+
+Chip-8 draws graphics on screen through the use of sprites.  A sprite is a group of bytes which are a binary representation of the desired picture.
+Sprites may be up to 15 bytes, for a possible sprite size of 8x15.
+
+Programs may also refer to a group of sprites representing the hexadecimal digits 0 through F. These sprites are 5 bytes long, or 8x5 pixels.
+
 ## Notes about COSMIC VIP implementation
 
 * Instructions `8XY6` and `8XYE` use `VY`, see [here](https://github.com/Chromatophore/HP48-Superchip#8xy6--8xye-aka-x--y-x--y).
@@ -58,6 +99,7 @@ This [COSMIC VIP](https://github.com/Chromatophore/HP48-Superchip/blob/master/in
 ## TODO
 
 * [ ] CPU
+    * [x] instructions
     * [x] Handle `SP`
     * [x] Handle `V0` to `VF`
     * [x] Handle `PC`

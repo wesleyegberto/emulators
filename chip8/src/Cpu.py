@@ -21,11 +21,11 @@ class Cpu:
     STACK_END_ADDRESS = 0xEC0 # 16 levels of nested subroutines
 
     # internal registers
-    REGISTER_PC_ADDRESS = 0xED0 # 16-bit
+    REGISTER_PC_ADDRESS = 0xED0 # 16-bit program counter
     REGISTER_I_ADDRESS = 0xED2 # 16-bit
-    REGISTER_SP_ADDRESS = 0xED4 # 8-bit
-    REGISTER_DT_ADDRESS = 0xED5 # 8-bit
-    REGISTER_ST_ADDRESS = 0xED6 # 8-bit
+    REGISTER_SP_ADDRESS = 0xED4 # 8-bit stack pointer
+    REGISTER_DT_ADDRESS = 0xED5 # 8-bit delay timer (decremented at a rate of 60Hz)
+    REGISTER_ST_ADDRESS = 0xED6 # 8-bit sound timer (decremented at a rate of 60Hz)
     REGISTER_RANDOM_NUMBER = 0xED9 # 8-bit
 
     # data registers start memory position: 0xEF0 + V (where V is a variable from V0 to VF)
