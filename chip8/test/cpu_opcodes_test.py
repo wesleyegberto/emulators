@@ -405,11 +405,11 @@ class CpuTestCase(unittest.TestCase):
     def test_opcode_DXYN_should_write_sprite_to_memory_location_I(self):
         self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, 0x200)
 
-        # sprite (black box)
+        # sprite of an 8
         self.memory.write_8bit(0x200, 0xF0)
-        self.memory.write_8bit(0x201, 0xF0)
+        self.memory.write_8bit(0x201, 0xD0)
         self.memory.write_8bit(0x202, 0xF0)
-        self.memory.write_8bit(0x203, 0xF0)
+        self.memory.write_8bit(0x203, 0xD0)
         self.memory.write_8bit(0x204, 0xF0)
         self.memory.write_8bit(0x205, 0x0)
 
@@ -418,10 +418,42 @@ class CpuTestCase(unittest.TestCase):
         self.assert_memory_address_16bit_value(Cpu.REGISTER_I_ADDRESS, 0x200)
         # assert the display memory
         self.assert_memory_address_8bit_value(self.cpu.DISPLAY_RESERVED_START_ADDRESS, 0xF0)
-        self.assert_memory_address_8bit_value(self.cpu.DISPLAY_RESERVED_START_ADDRESS + 8, 0xF0)
+        self.assert_memory_address_8bit_value(self.cpu.DISPLAY_RESERVED_START_ADDRESS + 8, 0xD0)
         self.assert_memory_address_8bit_value(self.cpu.DISPLAY_RESERVED_START_ADDRESS + 16, 0xF0)
-        self.assert_memory_address_8bit_value(self.cpu.DISPLAY_RESERVED_START_ADDRESS + 24, 0xF0)
+        self.assert_memory_address_8bit_value(self.cpu.DISPLAY_RESERVED_START_ADDRESS + 24, 0xD0)
         self.assert_memory_address_8bit_value(self.cpu.DISPLAY_RESERVED_START_ADDRESS + 32, 0xF0)
+
+        self.assert_data_register_value(0xF, 0)
+
+    def test_opcode_DXYN_should_register_sprite_collision(self):
+        self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, 0x300)
+
+        # sprite has a single dot in top-left corner
+        self.memory.write_8bit(0x300, 0x80)
+
+        self.cpu.opcode_DXYN(0, 0, 5);
+
+        self.assert_memory_address_8bit_value(self.cpu.DISPLAY_RESERVED_START_ADDRESS, 0x80)
+
+        # calling twice should clear the sprite and set the flag
+        self.cpu.opcode_DXYN(0, 0, 5);
+
+        self.assert_memory_address_16bit_value(Cpu.REGISTER_I_ADDRESS, 0x300)
+
+        # assert the display memory
+        self.assert_memory_address_8bit_value(self.cpu.DISPLAY_RESERVED_START_ADDRESS, 0x0)
+        self.assert_memory_address_8bit_value(self.cpu.DISPLAY_RESERVED_START_ADDRESS + 8, 0x0)
+        self.assert_memory_address_8bit_value(self.cpu.DISPLAY_RESERVED_START_ADDRESS + 16, 0x0)
+        self.assert_memory_address_8bit_value(self.cpu.DISPLAY_RESERVED_START_ADDRESS + 24, 0x0)
+        self.assert_memory_address_8bit_value(self.cpu.DISPLAY_RESERVED_START_ADDRESS + 32, 0x0)
+
+        self.assert_data_register_value(0xF, 1)
+
+    def test_opcode_DXYN_should_write_sprite_given_screen_position(self):
+        pass
+
+    def test_opcode_DXYN_should_write_to_start_of_screen_when_starting_at_end(self):
+        pass
 
     def test_opcode_EX9E_should_skip_next_instruction_if_given_key_was_pressed(self):
         self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, 0x200)

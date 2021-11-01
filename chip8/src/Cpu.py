@@ -441,12 +441,30 @@ class Cpu:
         addr = self.memory.read_16bit(Cpu.REGISTER_I_ADDRESS)
         # TODO: read 8 bit and split
 
+        collision_flag = 0
+
         for l in range(0, nibble):
+            # calculate the offset to transform the screen MxN to memory array position
             line_offset = (y + l) * self.DISPLAY_ROW_WIDTH_OFFSET + x
+            # display pixel address in memory
             display_addr = self.DISPLAY_RESERVED_START_ADDRESS + line_offset
             if display_addr > self.DISPLAY_RESERVED_END_ADDRESS:
                 raise Exception('Memory out of display: %s' % hex(display_addr))
-            self.memory.write_8bit(display_addr, 0x1)
+
+            sprite_row = self.memory.read_8bit(addr)
+            curr_screen_row = self.memory.read_8bit(display_addr)
+
+            collision_flag = collision_flag | sprite_row & curr_screen_row
+
+            draw_result = (sprite_row ^ curr_screen_row) & sprite_row
+
+            self.memory.write_8bit(display_addr, draw_result)
+            addr += 0x1
+
+        if (collision_flag > 0):
+            self.write_V(0xF, 1)
+        else:
+            self.write_V(0xF, 0)
 
     def opcode_EX9E(self, x):
         """ Skip next instruction if key with the value of VX is pressed.
