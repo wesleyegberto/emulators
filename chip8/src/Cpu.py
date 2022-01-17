@@ -20,7 +20,7 @@ class Cpu:
     STACK_START_ADDRESS = 0xEA0 # Addr 0xEA0 + REGISTER_SP_ADDRESS
     STACK_END_ADDRESS = 0xEC0 # 16 levels of nested subroutines
 
-    # internal registers
+    # internal registers (implemented using the memory)
     REGISTER_PC_ADDRESS = 0xED0 # 16-bit program counter
     REGISTER_I_ADDRESS = 0xED2 # 16-bit
     REGISTER_SP_ADDRESS = 0xED4 # 8-bit stack pointer
@@ -37,9 +37,13 @@ class Cpu:
     DISPLAY_RESERVED_END_ADDRESS = 0xFFF
     DISPLAY_ROW_WIDTH_OFFSET = 64 // 8 # 8 bytes by row
 
+    # number of cycles to execute by the CPU
+    NUMBER_CYCLES_BY_EXECUTION = 23;
+
     def __init__(self):
         self.memory = Memory()
         self.keyboard = Keyboard()
+        self.cyclesCounter = 0;
 
         self.initialize()
 
@@ -71,14 +75,31 @@ class Cpu:
         """ Start the CPU processing. """
         # Steps:
         # 1 - advance clock
+        #   - generate interrupts
+        #   - emulate graphics
+        #   - emulate sound
         # 2 - increase PC
         # 3 - check interruption (DT)
         # 4 - check ST to beep
         while True:
             # TODO: clock
-            self.step_pc()
+            self.execute_cpu(cycles)
             self.check_dt()
             self.check_beep()
+
+    def execute_cpu(self, cycles):
+        # fetch the opcode
+        pc = self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS)
+        opcode = self.memory.read_16bit(addr)
+        self.step_pc()
+
+        # decode it
+        decoded_opcode = self.decode_opcode(opcode)
+
+        # execute it
+
+    def decode_opcode(self, opcode);
+        pass
 
     def step_pc(self):
         """ Increment PC by 2 bytes """
@@ -566,6 +587,11 @@ class Cpu:
         self.memory.write_8bit(addr + 2, x_value % 10)
 
     def opcode_FX55(self, x):
+        """ Store the values of registers V0 through VX, inclusive, in memory starting at address I.
+
+        The interpreter copies the values of registers V0 through VX into memory, starting at the address in I.
+        I is set to I + X + 1 after operation.
+        """
         addr = self.memory.read_16bit(Cpu.REGISTER_I_ADDRESS)
         for i in range(0, x + 1):
             self.validate_memory_access_address(addr)
@@ -574,6 +600,11 @@ class Cpu:
             addr = addr + 1
 
     def opcode_FX65(self, x):
+        """ Read registers V0 through VX, inclusive, with the values stored in memory starting at address I.
+
+        The interpreter reads values from memory starting at location I into registers V0 through VX.
+        I is set to I + X + 1 after operation.
+        """
         addr = self.memory.read_16bit(Cpu.REGISTER_I_ADDRESS)
         for i in range(0, x + 1):
             self.validate_memory_access_address(addr)

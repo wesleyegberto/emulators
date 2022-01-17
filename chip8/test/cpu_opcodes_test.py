@@ -423,6 +423,7 @@ class CpuTestCase(unittest.TestCase):
         self.assert_memory_address_8bit_value(self.cpu.DISPLAY_RESERVED_START_ADDRESS + 24, 0xD0)
         self.assert_memory_address_8bit_value(self.cpu.DISPLAY_RESERVED_START_ADDRESS + 32, 0xF0)
 
+        # assert that there wasn't any collision
         self.assert_data_register_value(0xF, 0)
 
     def test_opcode_DXYN_should_register_sprite_collision(self):

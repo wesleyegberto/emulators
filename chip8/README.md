@@ -139,6 +139,7 @@ Example of program to show the "8" pattern at the top left part of the screen:
     * [x] Memory: verify if needs to reserve memory for call stack and registers (`I`, `PC`, `SP`, `V0` to `VF`)
     * [x] Move logic to update register to `Cpu` class
 * [ ] Screen
+* [ ] Sound
 * [ ] Keyboard
 * [ ] Rom reader
 
@@ -158,4 +159,5 @@ Example of program to show the "8" pattern at the top left part of the screen:
 * [Octo IDE - High level assembler for Chip8 VM](https://github.com/JohnEarnest/Octo)
 * [COSMAC VIP Instruction Manual](https://archive.org/details/bitsavers_rcacosmacCManual1978_6956559/page/n1/mode/2up)
 * [DREAM 6800 Manual](https://archive.org/stream/EA1979/EA%201979-05%20May#page/n85/mode/2up)
+* [Emutalk](https://www.emutalk.net/threads/chip-8.19894/)
 
