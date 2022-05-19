@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7.11'
+
+      - name: Install Requirements
+        run:  pip install pytest pytest-cov
+
+      - name: Unit Test
+        run: |-
+          coverage run --source=src/ -m pytest test/
+          coverage report -m
+          coverage xml -i
+
