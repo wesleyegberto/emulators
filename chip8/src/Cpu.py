@@ -83,14 +83,14 @@ class Cpu:
         # 4 - check ST to beep
         while True:
             # TODO: clock
-            self.execute_cpu(cycles)
+            self.execute_cpu(1)
             self.check_dt()
             self.check_beep()
 
     def execute_cpu(self, cycles):
         # fetch the opcode
         pc = self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS)
-        opcode = self.memory.read_16bit(addr)
+        opcode = self.memory.read_16bit(pc)
         self.step_pc()
 
         # decode it
@@ -98,7 +98,7 @@ class Cpu:
 
         # execute it
 
-    def decode_opcode(self, opcode);
+    def decode_opcode(self, opcode):
         pass
 
     def step_pc(self):
