@@ -1,13 +1,21 @@
-name: CI
+name: Chip8 - CI
 
 on:
   push:
     branches:
       - main
+    paths:
+      - 'chip8/**'
 
 jobs:
-  Build:
+  build:
+    name: Build and Test
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: chip8/
+
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
