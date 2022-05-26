@@ -8,7 +8,5 @@ pytest:
 	python3 -m pytest -vs test/
 
 coverage:
-	coverage run --source=src/ -m pytest test/
-	coverage report -m
-	coverage xml -i
+	python3 -m pytest -vs test/ --cov=src/ --cov-report=term --cov-report=html
 
