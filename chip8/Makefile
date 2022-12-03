@@ -1,6 +1,9 @@
 run:
 	python3 ./src/main.py
 
+deps:
+	pip3 install -r requirements.txt
+
 tests:
 	python3 -m unittest discover -vs test -p "*_test.py"
 
