@@ -99,6 +99,8 @@ The sprite is positioned at screen with the format of MxN:
 - M going from 0x0 to 0x3F
 - N going from 0x0 to 0x1F
 
+![](./img/display.png)
+
 The pixels to be shown are defined in the last 256 bytes section of the RAM (from 0xEFF to 0xFFF).
 The pixels are defined by each RAM position:
 

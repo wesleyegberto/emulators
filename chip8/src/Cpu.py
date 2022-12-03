@@ -36,6 +36,8 @@ class Cpu:
     DISPLAY_RESERVED_START_ADDRESS = 0xF00
     DISPLAY_RESERVED_END_ADDRESS = 0xFFF
     DISPLAY_ROW_WIDTH_OFFSET = 64 // 8 # 8 bytes by row
+    DISPLAY_WIDTH = 0x3F
+    DISPLAY_HEIGHT = 0x1F
 
     # number of cycles to execute by the CPU
     NUMBER_CYCLES_BY_EXECUTION = 23;
@@ -451,7 +453,7 @@ class Cpu:
         self.memory.write_8bit(Cpu.REGISTER_RANDOM_NUMBER, random_value)
         self.write_V(x, random_value)
 
-    def opcode_DXYN(self, x, y, nibble):
+    def opcode_DXYN(self, vx, vy, nibble):
         """ Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision.
 
         The interpreter reads n bytes from memory (indicates the heigh of the sprite), starting at the address stored in I.
@@ -461,6 +463,8 @@ class Cpu:
         """
 
         addr = self.memory.read_16bit(Cpu.REGISTER_I_ADDRESS)
+        x = self.read_V(vx) & Cpu.DISPLAY_WIDTH
+        y = self.read_V(vy) & Cpu.DISPLAY_HEIGHT
         # TODO: read 8 bit and split
 
         collision_flag = 0
@@ -481,6 +485,7 @@ class Cpu:
             if curr_screen_row > 0:
                 collision_flag = collision_flag | sprite_row & curr_screen_row
 
+            # XOEed the sprite row into the screen, turning it off if there is a collision
             draw_result = (sprite_row ^ curr_screen_row) & sprite_row
 
             self.memory.write_8bit(display_addr, draw_result)

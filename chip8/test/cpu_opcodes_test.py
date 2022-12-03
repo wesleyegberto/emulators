@@ -1,6 +1,5 @@
 import unittest
 import sys
-from pathlib import Path
 
 sys.path.append('src')
 
@@ -413,7 +412,10 @@ class CpuTestCase(unittest.TestCase):
         self.memory.write_8bit(0x204, 0xF0)
         self.memory.write_8bit(0x205, 0x0)
 
-        self.cpu.opcode_DXYN(0, 0, 5);
+        self.cpu.write_V(0, 0)
+        self.cpu.write_V(1, 0)
+
+        self.cpu.opcode_DXYN(0, 1, 5);
 
         self.assert_memory_address_16bit_value(Cpu.REGISTER_I_ADDRESS, 0x200)
         # assert the display memory
@@ -432,12 +434,14 @@ class CpuTestCase(unittest.TestCase):
         # sprite has a single dot in top-left corner
         self.memory.write_8bit(0x300, 0x80)
 
-        self.cpu.opcode_DXYN(0, 0, 5);
+        self.cpu.write_V(0x1, 0)
+        self.cpu.write_V(0x2, 0)
+        self.cpu.opcode_DXYN(0x1, 0x2, 5);
 
         self.assert_memory_address_8bit_value(Cpu.DISPLAY_RESERVED_START_ADDRESS, 0x80)
 
         # calling twice should clear the sprite and set the flag
-        self.cpu.opcode_DXYN(0, 0, 5);
+        self.cpu.opcode_DXYN(1, 2, 5);
 
         self.assert_memory_address_16bit_value(Cpu.REGISTER_I_ADDRESS, 0x300)
 
@@ -479,7 +483,9 @@ class CpuTestCase(unittest.TestCase):
 
         x = 0x10
         y = 0xA
-        self.cpu.opcode_DXYN(x, y, 15)
+        self.cpu.write_V(0xA, x)
+        self.cpu.write_V(0xB, y)
+        self.cpu.opcode_DXYN(0xA, 0xB, 15)
 
         self.assert_data_register_value(0xF, 0)
         for i in range(len(sprite)):
@@ -505,13 +511,17 @@ class CpuTestCase(unittest.TestCase):
             addr = sprite_addr + i
             self.memory.write_8bit(addr, sprite[i])
 
-        x = 0x10
-        y = 0xA
-        self.cpu.opcode_DXYN(x, y, 15)
+        x = 0x45
+        y = 0x0
+        self.cpu.write_V(0xA, x)
+        self.cpu.write_V(0xB, y)
+        self.cpu.opcode_DXYN(0xA, 0xB, 15)
 
         self.assert_data_register_value(0xF, 0)
+
+        expected_x = 0x5
         for i in range(len(sprite)):
-            offset = (y + i) * Cpu.DISPLAY_ROW_WIDTH_OFFSET + x
+            offset = (y + i) * Cpu.DISPLAY_ROW_WIDTH_OFFSET + expected_x
             addr = Cpu.DISPLAY_RESERVED_START_ADDRESS + offset
 
             screen_row = self.memory.read_8bit(addr)
