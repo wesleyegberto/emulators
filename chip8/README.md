@@ -119,6 +119,31 @@ Example of program to show the "8" pattern at the top left part of the screen:
 020E F000 # sprite's line 5
 ```
 
+In this project the implementation uses Pygame to render the screen memory map.
+For each memory cell in the display is scaled to 4 pixels in Pygame screen.
+
+### Keyboard
+
+The keyboard input controller is implemented using Pygame event handling to capture the keys pressed by the player.
+
+The implementation just map the key pressed to Chip8 input code using the following layout:
+
+```
+Original COSMIC VIP keyboard layout:
+
+1 2 3 C
+4 5 6 D
+7 8 9 E
+A 0 B F
+
+Keyboard controller layout:
+
+4 5 6 7
+R T Y U
+F G H J
+V B N M
+```
+
 ## Notes about COSMIC VIP implementation
 
 * Instructions `8XY6` and `8XYE` use `VY`, see [here](https://github.com/Chromatophore/HP48-Superchip#8xy6--8xye-aka-x--y-x--y).
@@ -142,6 +167,8 @@ Example of program to show the "8" pattern at the top left part of the screen:
     * [x] Implement hexadecimal controller
     * [ ] Implement Pygame keyboard input controller
 * [ ] Screen
+    * [ ] Implement display
+    * [ ] Implement rendering with Pygame
 * [ ] Sound
 * [ ] Rom reader
 
