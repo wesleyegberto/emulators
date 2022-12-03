@@ -65,6 +65,7 @@ class Cpu:
         # stack points start at reserved memory address
         self.memory.write_8bit(Cpu.REGISTER_SP_ADDRESS, self.STACK_START_ADDRESS)
 
+        # registers for sound control
         self.memory.write_8bit(Cpu.REGISTER_DT_ADDRESS, 0x00)
         self.memory.write_8bit(Cpu.REGISTER_ST_ADDRESS, 0x00)
 

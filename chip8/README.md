@@ -31,13 +31,13 @@ If a program includes sprite data, it should be padded so any instructions follo
 
 ### Memory
 
-Chip-8 many registers, detailed [here](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#2.2):
+Chip-8 has a lot of registers, detailed [here](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#2.2):
 
 * 16 general purpose 8-bit registers, referred to as `VX` where `X` is a hexadecimal digit (0 through F);
   * `VF` should not be used by any program, as it is also used as a flag by some instructions.
 * 16-bit register called `I` used to store memory addresses in some instructions, so only the lowest (rightmost) 12 bits are usually used;
 * two special 8-bit regsiters for the delay and sound timers:
-  * whhen they are non-zero, they are automatically decremented at a rate of 60Hz.
+  * when they are non-zero, they are automatically decremented at a rate of 60Hz.
 * internal registers:
   * `PC`: 16-bit register used as program counter to store the currently executing address;
   * `SP`: 8-bit register used as stack pointer to point to the topmost level of the stack.
@@ -138,9 +138,11 @@ Example of program to show the "8" pattern at the top left part of the screen:
     * [x] Memory: bultin fonts
     * [x] Memory: verify if needs to reserve memory for call stack and registers (`I`, `PC`, `SP`, `V0` to `VF`)
     * [x] Move logic to update register to `Cpu` class
+* [ ] Keyboard
+    * [x] Implement hexadecimal controller
+    * [ ] Implement Pygame keyboard input controller
 * [ ] Screen
 * [ ] Sound
-* [ ] Keyboard
 * [ ] Rom reader
 
 ## Links

@@ -17,3 +17,6 @@ class Keyboard:
 
     def send_key(self, key_code):
         self.last_key_pressed = key_code & 0xF
+
+    def handle_pygame_event(self, event):
+        pass
