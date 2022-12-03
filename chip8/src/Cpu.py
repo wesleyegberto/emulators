@@ -213,7 +213,7 @@ class Cpu:
         self.validate_memory_access_address(addr)
         self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, addr)
 
-    def opcode_0NNN(self, addr):
+    def opcode_0NNN(self, addr=None):
         """ Jump to a machine code routine at nnn.
 
         This instruction is only used on the old computers on which Chip-8 was
@@ -473,10 +473,13 @@ class Cpu:
             if display_addr > self.DISPLAY_RESERVED_END_ADDRESS:
                 raise Exception('Memory out of display: %s' % hex(display_addr))
 
+            # row of 8 bits
             sprite_row = self.memory.read_8bit(addr)
             curr_screen_row = self.memory.read_8bit(display_addr)
 
-            collision_flag = collision_flag | sprite_row & curr_screen_row
+            # only apply XOR flag rule if the current pixel is on
+            if curr_screen_row > 0:
+                collision_flag = collision_flag | sprite_row & curr_screen_row
 
             draw_result = (sprite_row ^ curr_screen_row) & sprite_row
 

@@ -26,7 +26,9 @@ From [Cowgod's website](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#1.0):
 ### CPU
 
 The original implementation of the Chip-8 language includes 36 different instructions, including math, graphics, and flow control functions.
-All instructions are 2 bytes long and are stored most-significant-byte first. In memory, the first byte of each instruction should be located at an even addresses.
+
+All instructions are 2 bytes long and are stored as most-significant-byte first.
+In memory, the first byte of each instruction should be located at an even addresses.
 If a program includes sprite data, it should be padded so any instructions following it will be properly situated in RAM.
 
 ### Memory
@@ -85,11 +87,12 @@ This [COSMIC VIP](https://github.com/Chromatophore/HP48-Superchip/blob/master/in
 
 ### Display
 
-The implementation can be created from [RCA COSMAC VIP CDP18S711 Instruction Manual](./docs/RCA COSMAC VIP CDP18S711 Instruction Manual.pdf), page 13.
+The implementation can be created from [RCA COSMAC VIP CDP18S711 Instruction Manual](./docs/RCA%20COSMAC%20VIP%20CDP18S711%20Instruction%20Manual.pdf), page 13.
 
 Chip-8 language used a 64x32 pixel monochrome display and it draws graphics on screen through the use of sprites.
+
 A sprite is a group of bytes which are a binary representation of the desired picture.
-Sprites may be up to 15 bytes (1 byte wide and t most 5 bytes high), for a possible sprite size of 8x15.
+Sprites may be up to 15 bytes (1 byte wide and at most 5 bytes high), for a possible sprite size of 8x15.
 
 The sprite is positioned at screen with the format of MxN:
 
@@ -159,18 +162,22 @@ V B N M
     * [ ] Handle `DT`
     * [ ] Handle `ST`
     * [ ] Implement cycle
+    * [ ] Connect to main loop
 * [ ] Memory
     * [x] Memory: bultin fonts
     * [x] Memory: verify if needs to reserve memory for call stack and registers (`I`, `PC`, `SP`, `V0` to `VF`)
     * [x] Move logic to update register to `Cpu` class
 * [ ] Keyboard
     * [x] Implement hexadecimal controller
-    * [ ] Implement Pygame keyboard input controller
+    * [x] Implement Pygame keyboard input controller
+    * [ ] Connect to main loop
 * [ ] Screen
     * [ ] Implement display
     * [ ] Implement rendering with Pygame
+    * [ ] Connect to main loop
 * [ ] Sound
 * [ ] Rom reader
+* [ ] Implement main loop
 
 ## Links
 

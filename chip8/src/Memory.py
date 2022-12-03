@@ -1,8 +1,6 @@
-
 class Memory:
-    MEMORY_SIZE = 4096
-
     """ Memory with 4 KB """
+    MEMORY_SIZE = 4096
 
     def __init__(self):
         """ Initialize the memory with 0x000
@@ -34,10 +32,11 @@ class Memory:
 
 
     def write_8bit(self, address, value):
-        """ Store a 8-bit value at address. """
+        """ Store a 8-bit value at given address. """
         self.memory[address] = value & 0xFF
 
     def read_8bit(self, address):
+        """ Read a 8-bit value from given address. """
         return self.memory[address]
 
     def write_16bit(self, address, value):
