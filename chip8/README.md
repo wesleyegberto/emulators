@@ -162,4 +162,5 @@ Example of program to show the "8" pattern at the top left part of the screen:
 * [COSMAC VIP Instruction Manual](https://archive.org/details/bitsavers_rcacosmacCManual1978_6956559/page/n1/mode/2up)
 * [DREAM 6800 Manual](https://archive.org/stream/EA1979/EA%201979-05%20May#page/n85/mode/2up)
 * [Emutalk](https://www.emutalk.net/threads/chip-8.19894/)
+* [Awesome Chip8 repo](https://github.com/tobiasvl/awesome-chip-8)
 
