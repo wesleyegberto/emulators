@@ -25,11 +25,13 @@ From [Cowgod's website](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#1.0):
 
 ### CPU
 
-The original implementation of the Chip-8 language includes 36 different instructions, including math, graphics, and flow control functions.
+The original implementation of the Chip-8 language includes [36 different instructions](https://github.com/mattmikolay/chip-8/wiki/CHIP%E2%80%908-Instruction-Set), including math, graphics, and flow control functions.
 
-All instructions are 2 bytes long and are stored as most-significant-byte first.
+All instructions are 2 bytes long and are stored as most-significant-byte first (big-endian).
 In memory, the first byte of each instruction should be located at an even addresses.
 If a program includes sprite data, it should be padded so any instructions following it will be properly situated in RAM.
+
+The crytal clock operates at 1.76 MHz.
 
 ### Memory
 
@@ -163,6 +165,7 @@ V B N M
     * [x] Handle `I`
     * [ ] Handle `DT`
     * [ ] Handle `ST`
+    * [ ] Implement instruction decode
     * [ ] Implement cycle
     * [ ] Connect to main loop
 * [ ] Memory
@@ -183,9 +186,9 @@ V B N M
 
 ## Links
 
+* [Wiki](https://en.wikipedia.org/wik/CHIP-8)
 * [Study of the techniques for emulation programming](http://www.codeslinger.co.uk/files/emu.pdf)
 * [Unified Chip8 Documentation (Best one)](https://github.com/trapexit/chip-8_documentation)
-* [Wiki](https://en.wikipedia.org/wiki/CHIP-8)
 * [Cowgod's Chip8 Technical Reference](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#0.0)
 * [Mastering Chip8](http://mattmik.com/files/chip8/mastering/chip8.html)
 * [Programming in Chip-8 - EIT ed Nov 1981](https://archive.org/stream/ETIA1981/ETI%201981-11%20November#page/n113/mode/2up))
