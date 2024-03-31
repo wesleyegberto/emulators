@@ -156,7 +156,7 @@ class Cpu:
                 break
 
         if opcode_function is None:
-            raise Exception('Opcode cannot be decoded: %x' % hex(opcode));
+            raise Exception('Opcode cannot be decoded: %s' % hex(opcode));
 
         return lambda: opcode_function(opcode)
 
