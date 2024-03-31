@@ -54,11 +54,11 @@ class CpuTestCase(unittest.TestCase):
         self.assert_equal_hex(self.cpu.get_opcode_value_NNN(0x8A27), 0xA27)
         self.assert_equal_hex(self.cpu.get_opcode_value_NNN(0x8F81), 0xF81)
 
-    def test_decode_opcode(self):
+    def test_decode_opcode_should_accept_valid_opcode(self):
         opcodes_tests = {
             0x00E0: 0x00E0,
             0x00EE: 0x00EE,
-            0x0AFC: 0x0000,
+            # 0x0AFC: 0x0000,
             0x1AFC: 0x1000,
             0x2A8A: 0x2000,
             0x32FF: 0x3000,
@@ -97,7 +97,7 @@ class CpuTestCase(unittest.TestCase):
         # mock the map to just return string instead of executing the opcode
         for opcode_test in opcodes_tests:
             opcode = opcodes_tests[opcode_test]
-            self.cpu.opcodes_map[opcode] = lambda _: hex(opcode)
+            self.cpu.opcodes_functions_map[opcode] = lambda _: hex(opcode)
 
         for opcode_test in opcodes_tests:
             opcode = opcodes_tests[opcode_test]
@@ -105,8 +105,12 @@ class CpuTestCase(unittest.TestCase):
             opcode_function = self.cpu.decode_opcode(opcode_test)
             self.assertEqual(opcode_function(), hex(opcode))
 
-        with self.assertRaises(Exception):
-            self.cpu.decode_opcode(0xF48C)
+    def test_decode_opcode_should_reject_invalid_opcode(self):
+        invalid_opcodes = [0x01A0, 0x00E1, 0xF48C]
+
+        for opcode in invalid_opcodes:
+            with self.assertRaises(Exception):
+                self.cpu.decode_opcode(opcode)
 
     def test_opcode_0NNN(self):
         with self.assertRaises(Exception):

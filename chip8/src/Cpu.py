@@ -47,10 +47,49 @@ class Cpu:
         self.keyboard = Keyboard()
         self.cyclesCounter = 0;
 
-        self.opcodes_map = {
+        self.opcodes_masks = [
+            { 'mask': 0xFFFF, 'opcode': 0x00E0 },
+            { 'mask': 0xFFFF, 'opcode': 0x00EE },
+            # { 'mask': 0xF000, 'opcode': 0x0000 },
+            { 'mask': 0xF000, 'opcode': 0x1000 },
+            { 'mask': 0xF000, 'opcode': 0x2000 },
+            { 'mask': 0xF000, 'opcode': 0x3000 },
+            { 'mask': 0xF000, 'opcode': 0x4000 },
+            { 'mask': 0xF00F, 'opcode': 0x5000 },
+            { 'mask': 0xF000, 'opcode': 0x6000 },
+            { 'mask': 0xF000, 'opcode': 0x7000 },
+            { 'mask': 0xF00F, 'opcode': 0x8000 },
+            { 'mask': 0xF00F, 'opcode': 0x8001 },
+            { 'mask': 0xF00F, 'opcode': 0x8002 },
+            { 'mask': 0xF00F, 'opcode': 0x8003 },
+            { 'mask': 0xF00F, 'opcode': 0x8004 },
+            { 'mask': 0xF00F, 'opcode': 0x8005 },
+            { 'mask': 0xF00F, 'opcode': 0x8006 },
+            { 'mask': 0xF00F, 'opcode': 0x8007 },
+            { 'mask': 0xF00F, 'opcode': 0x800E },
+            { 'mask': 0xF00F, 'opcode': 0x9000 },
+            { 'mask': 0xF000, 'opcode': 0xA000 },
+            { 'mask': 0xF000, 'opcode': 0xB000 },
+            { 'mask': 0xF000, 'opcode': 0xC000 },
+            { 'mask': 0xF000, 'opcode': 0xD000 },
+            { 'mask': 0xF0FF, 'opcode': 0xE09E },
+            { 'mask': 0xF0FF, 'opcode': 0xE0A1 },
+            { 'mask': 0xF0FF, 'opcode': 0xF000 },
+            { 'mask': 0xF0FF, 'opcode': 0xF007 },
+            { 'mask': 0xF0FF, 'opcode': 0xF00A },
+            { 'mask': 0xF0FF, 'opcode': 0xF015 },
+            { 'mask': 0xF0FF, 'opcode': 0xF018 },
+            { 'mask': 0xF0FF, 'opcode': 0xF01E },
+            { 'mask': 0xF0FF, 'opcode': 0xF029 },
+            { 'mask': 0xF0FF, 'opcode': 0xF033 },
+            { 'mask': 0xF0FF, 'opcode': 0xF055 },
+            { 'mask': 0xF0FF, 'opcode': 0xF065 },
+        ]
+
+        self.opcodes_functions_map = {
             0x00E0: lambda _: self.opcode_00E0(),
             0x00EE: lambda _: self.opcode_00EE(),
-            0x0000: lambda opcode: self.opcode_0NNN(self.get_opcode_value_NNN(opcode)),
+            # 0x0000: lambda opcode: self.opcode_0NNN(self.get_opcode_value_NNN(opcode)),
             0x1000: lambda opcode: self.opcode_1NNN(self.get_opcode_value_NNN(opcode)),
             0x2000: lambda opcode: self.opcode_2NNN(self.get_opcode_value_NNN(opcode)),
             0x3000: lambda opcode: self.opcode_3XKK(self.get_opcode_value_X(opcode), self.get_opcode_value_KK(opcode)),
@@ -150,9 +189,9 @@ class Cpu:
 
     def decode_opcode(self, opcode):
         opcode_function = None
-        for k in self.opcodes_map:
-            if opcode & k == k:
-                opcode_function = self.opcodes_map[k]
+        for opcode_mask in self.opcodes_masks:
+            if opcode & opcode_mask['mask'] == opcode_mask['opcode']:
+                opcode_function = self.opcodes_functions_map[opcode_mask['opcode']]
                 break
 
         if opcode_function is None:
