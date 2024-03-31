@@ -165,7 +165,7 @@ V B N M
     * [x] Handle `I`
     * [ ] Handle `DT`
     * [ ] Handle `ST`
-    * [ ] Implement instruction decode
+    * [x] Implement instruction decode
     * [ ] Implement cycle
     * [ ] Connect to main loop
 * [ ] Memory

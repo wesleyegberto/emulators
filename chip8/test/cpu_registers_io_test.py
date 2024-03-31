@@ -1,12 +1,11 @@
 import unittest
 import sys
-from pathlib import Path
 
 sys.path.append('src')
 
 from Cpu import Cpu
 
-class CpuTestCase(unittest.TestCase):
+class CpuRegistersTestCase(unittest.TestCase):
     def setUp(self):
         self.cpu = Cpu()
         self.memory = self.cpu.memory
