@@ -1,5 +1,9 @@
 class Memory:
-    """ Memory with 4 KB """
+    """ Memory with 4 KB
+
+    The memory has the layout with big-endian.
+    The memory is read/written using AND 0xFF to enforce byte size.
+    """
     MEMORY_SIZE = 4096
 
     def __init__(self):
@@ -37,7 +41,7 @@ class Memory:
 
     def read_8bit(self, address):
         """ Read a 8-bit value from given address. """
-        return self.memory[address]
+        return self.memory[address] & 0xFF
 
     def write_16bit(self, address, value):
         """ Store a 16-bit value into two 8-bit cells starting at given address. """
