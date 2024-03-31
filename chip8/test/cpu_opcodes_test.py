@@ -11,20 +11,52 @@ class CpuTestCase(unittest.TestCase):
         self.memory = self.cpu.memory
         self.keyboard = self.cpu.keyboard
 
+    def assert_equal_hex(self, actual, expected):
+        self.assertEqual(actual, expected, "Hex: {} != {}".format(hex(actual), hex(expected)))
+
     def assert_data_register_value(self, x, expected_value):
-        self.assertEqual(self.cpu.read_V(x), expected_value)
+        self.assert_equal_hex(self.cpu.read_V(x), expected_value)
         memory_position = self.cpu.calculate_data_register_memory_address(x)
-        self.assertEqual(self.memory.read_8bit(memory_position), expected_value)
+        self.assert_equal_hex(self.memory.read_8bit(memory_position), expected_value)
 
     def assert_memory_address_16bit_value(self, addr, expected_value):
-        self.assertEqual(self.memory.read_16bit(addr), expected_value)
+        self.assert_equal_hex(self.memory.read_16bit(addr), expected_value)
 
     def assert_memory_address_8bit_value(self, addr, expected_value):
-        self.assertEqual(self.memory.read_8bit(addr), expected_value)
+        self.assert_equal_hex(self.memory.read_8bit(addr), expected_value)
 
-    def test_opcode_0NNN(self):
+    def setup_opcode(self, opcode):
+        self.memory.write_16bit(0x200, opcode)
+        self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, 0x200)
+
+    def test_get_opcode_value_X_should_extract_value(self):
+        self.assert_equal_hex(self.cpu.get_opcode_value_X(0x0A00), 0xA)
+        self.assert_equal_hex(self.cpu.get_opcode_value_X(0x1234), 0x2)
+        self.assert_equal_hex(self.cpu.get_opcode_value_X(0x8FA1), 0xF)
+
+    def test_get_opcode_value_Y_should_extract_value(self):
+        self.assert_equal_hex(self.cpu.get_opcode_value_Y(0x00B0), 0xB)
+        self.assert_equal_hex(self.cpu.get_opcode_value_Y(0x8A27), 0x2)
+        self.assert_equal_hex(self.cpu.get_opcode_value_Y(0x8F81), 0x8)
+
+    def test_get_opcode_value_K_should_extract_value(self):
+        self.assert_equal_hex(self.cpu.get_opcode_value_K(0x000C), 0xC)
+        self.assert_equal_hex(self.cpu.get_opcode_value_K(0x8A27), 0x7)
+        self.assert_equal_hex(self.cpu.get_opcode_value_K(0x8F81), 0x1)
+
+    def test_get_opcode_value_KK_should_extract_value(self):
+        self.assert_equal_hex(self.cpu.get_opcode_value_KK(0x00CD), 0xCD)
+        self.assert_equal_hex(self.cpu.get_opcode_value_KK(0x8A27), 0x27)
+        self.assert_equal_hex(self.cpu.get_opcode_value_KK(0x8F81), 0x81)
+
+    def test_get_opcode_value_MMM_should_extract_value(self):
+        self.assert_equal_hex(self.cpu.get_opcode_value_MMM(0x0BCD), 0xBCD)
+        self.assert_equal_hex(self.cpu.get_opcode_value_MMM(0x8A27), 0xA27)
+        self.assert_equal_hex(self.cpu.get_opcode_value_MMM(0x8F81), 0xF81)
+
+    def test_opcode_0MMM(self):
         with self.assertRaises(Exception):
-            self.cpu.opcode_0NNN()
+            self.cpu.opcode_0MMM()
 
     def test_opcode_00E0_should_clean_display(self):
         self.memory.write_8bit(0xF00, 0xF0)
@@ -35,7 +67,20 @@ class CpuTestCase(unittest.TestCase):
         self.cpu.opcode_00E0()
 
         for addr in range(0xF00, 0xFFF):
-            self.assertEqual(self.memory.read_8bit(addr), 0x0)
+            self.assert_equal_hex(self.memory.read_8bit(addr), 0x0)
+
+    # def test_opcode_00E0_decode(self):
+    #     self.setup_opcode(0x00E0)
+    #
+    #     self.memory.write_8bit(0xF00, 0xF0)
+    #     self.memory.write_8bit(0xF10, 0xF0)
+    #     self.memory.write_8bit(0xFA0, 0xF0)
+    #     self.memory.write_8bit(0xFFF, 0xF0)
+    #
+    #     self.cpu.execute_cpu(1)
+    #
+    #     for addr in range(0xF00, 0xFFF):
+    #         self.assert_equal_hex(self.memory.read_8bit(addr), 0x0)
 
     def test_opcode_00EE_should_return_to_last_memory_address_before_subroutine(self):
         # Fake stack
@@ -48,9 +93,9 @@ class CpuTestCase(unittest.TestCase):
 
         self.cpu.opcode_00EE()
 
-        self.assertEqual(self.memory.read_8bit(Cpu.REGISTER_SP_ADDRESS), 0x02)
-        self.assertEqual(self.cpu.read_top_address_in_stack(), 0x202)
-        self.assertEqual(self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS), 0xAAA)
+        self.assert_equal_hex(self.memory.read_8bit(Cpu.REGISTER_SP_ADDRESS), 0x02)
+        self.assert_equal_hex(self.cpu.read_top_address_in_stack(), 0x202)
+        self.assert_equal_hex(self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS), 0xAAA)
 
     def test_opcode_00EE_should_throw_error_when_stack_is_empty(self):
         self.memory.write_16bit(0xEA0, 0x400)
@@ -60,32 +105,32 @@ class CpuTestCase(unittest.TestCase):
         with self.assertRaises(Exception):
             self.cpu.opcode_00EE()
 
-    def test_opcode_1NNN_should_jump_to_allowed_memory(self):
-        self.cpu.opcode_1NNN(0x8FF)
+    def test_opcode_1MMM_should_jump_to_allowed_memory(self):
+        self.cpu.opcode_1MMM(0x8FF)
 
-        self.assertEqual(self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS), 0x8FF)
+        self.assert_equal_hex(self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS), 0x8FF)
 
-    def test_opcode_1NNN_should_reject_not_allowed_memory(self):
+    def test_opcode_1MMM_should_reject_not_allowed_memory(self):
         with self.assertRaises(Exception):
-            self.cpu.opcode_1NNN(0xEA0)
+            self.cpu.opcode_1MMM(0xEA0)
 
-    def test_opcode_2NNN_should_be_correct_state_before_subroutine(self):
+    def test_opcode_2MMM_should_be_correct_state_before_subroutine(self):
         self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, 0x200)
         self.memory.write_8bit(Cpu.REGISTER_SP_ADDRESS, 0x00)
 
-        self.cpu.opcode_2NNN(0x400)
+        self.cpu.opcode_2MMM(0x400)
 
-        self.assertEqual(self.memory.read_8bit(Cpu.REGISTER_SP_ADDRESS), 0x02)
-        self.assertEqual(self.memory.read_16bit(0xEA2), 0x200)
-        self.assertEqual(self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS), 0x400)
+        self.assert_equal_hex(self.memory.read_8bit(Cpu.REGISTER_SP_ADDRESS), 0x02)
+        self.assert_equal_hex(self.memory.read_16bit(0xEA2), 0x200)
+        self.assert_equal_hex(self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS), 0x400)
 
-    def test_opcode_2NNN_should_throw_stack_overflow(self):
+    def test_opcode_2MMM_should_throw_stack_overflow(self):
         self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, 0x200)
         self.memory.write_8bit(Cpu.REGISTER_SP_ADDRESS, 0x00)
 
         with self.assertRaises(Exception):
             for _ in range(0, 16):
-                self.cpu.opcode_2NNN(0x400)
+                self.cpu.opcode_2MMM(0x400)
 
     def test_opcode_3XKK_should_skip_next_instruction_if_VX_equals_KK(self):
         self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, 0x200)
@@ -93,7 +138,7 @@ class CpuTestCase(unittest.TestCase):
 
         self.cpu.opcode_3XKK(2, 0x0F)
 
-        self.assertEqual(self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS), 0x202)
+        self.assert_equal_hex(self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS), 0x202)
         self.assert_data_register_value(2, 0x0F)
 
     def test_opcode_3XKK_should_not_skip_next_instruction_if_VX_not_equal_KK(self):
@@ -102,7 +147,7 @@ class CpuTestCase(unittest.TestCase):
 
         self.cpu.opcode_3XKK(2, 0xFF)
 
-        self.assertEqual(self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS), 0x200)
+        self.assert_equal_hex(self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS), 0x200)
         self.assert_data_register_value(2, 0x0F)
 
     def test_opcode_4XKK_should_skip_next_instruction_if_VX_not_equals_KK(self):
@@ -111,7 +156,7 @@ class CpuTestCase(unittest.TestCase):
 
         self.cpu.opcode_4XKK(3, 0xFF)
 
-        self.assertEqual(self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS), 0x202)
+        self.assert_equal_hex(self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS), 0x202)
         self.assert_data_register_value(3, 0xAF)
 
     def test_opcode_4XKK_should_not_skip_next_instruction_if_VX_equals_KK(self):
@@ -120,7 +165,7 @@ class CpuTestCase(unittest.TestCase):
 
         self.cpu.opcode_4XKK(3, 0xAF)
 
-        self.assertEqual(self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS), 0x200)
+        self.assert_equal_hex(self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS), 0x200)
         self.assert_data_register_value(3, 0xAF)
 
     def test_opcode_5XY0_should_skip_next_instruction_if_VX_equals_VY(self):
@@ -130,7 +175,7 @@ class CpuTestCase(unittest.TestCase):
 
         self.cpu.opcode_5XY0(4, 6)
 
-        self.assertEqual(self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS), 0x202)
+        self.assert_equal_hex(self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS), 0x202)
         self.assert_data_register_value(4, 0xDF)
         self.assert_data_register_value(6, 0xDF)
 
@@ -141,7 +186,7 @@ class CpuTestCase(unittest.TestCase):
 
         self.cpu.opcode_5XY0(4, 0xA)
 
-        self.assertEqual(self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS), 0x200)
+        self.assert_equal_hex(self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS), 0x200)
         self.assert_data_register_value(4, 0xEF)
         self.assert_data_register_value(0xA, 0xFF)
 
@@ -356,34 +401,34 @@ class CpuTestCase(unittest.TestCase):
         self.assert_data_register_value(0x2, 0xF)
 
 
-    def test_opcode_ANNN_should_set_register_I(self):
+    def test_opcode_AMMM_should_set_register_I(self):
         self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, 0x2FF)
 
-        self.cpu.opcode_ANNN(0x230)
+        self.cpu.opcode_AMMM(0x230)
 
         self.assert_memory_address_16bit_value(Cpu.REGISTER_I_ADDRESS, 0x230)
 
-    def test_opcode_ANNN_should_not_set_not_allowed_address_register_I(self):
+    def test_opcode_AMMM_should_not_set_not_allowed_address_register_I(self):
         self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, 0x2FF)
 
         with self.assertRaises(Exception):
-            self.cpu.opcode_ANNN(0xF30)
+            self.cpu.opcode_AMMM(0xF30)
 
-    def test_opcode_BNNN_should_jump_to_address_plus_data_register_V0(self):
+    def test_opcode_BMMM_should_jump_to_address_plus_data_register_V0(self):
         self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, 0x200)
         self.cpu.write_V(0x0, 0x2)
 
-        self.cpu.opcode_BNNN(0x400)
+        self.cpu.opcode_BMMM(0x400)
 
         self.assert_data_register_value(0x0, 0x2)
         self.assert_memory_address_16bit_value(Cpu.REGISTER_PC_ADDRESS, 0x404)
 
-    def test_opcode_BNNN_should_not_jump_to_address_not_allowed(self):
+    def test_opcode_BMMM_should_not_jump_to_address_not_allowed(self):
         self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, 0x200)
         self.cpu.write_V(0x0, 0xA)
 
         with self.assertRaises(Exception):
-            self.cpu.opcode_BNNN(0xE99)
+            self.cpu.opcode_BMMM(0xE99)
 
     def test_opcode_CXKK_should_set_data_register_X_to_random_byte_AND_0(self):
         self.cpu.write_V(0x9, 0xF)
@@ -415,7 +460,7 @@ class CpuTestCase(unittest.TestCase):
         self.cpu.write_V(0, 0)
         self.cpu.write_V(1, 0)
 
-        self.cpu.opcode_DXYN(0, 1, 5);
+        self.cpu.opcode_DXYK(0, 1, 5);
 
         self.assert_memory_address_16bit_value(Cpu.REGISTER_I_ADDRESS, 0x200)
         # assert the display memory
@@ -436,12 +481,12 @@ class CpuTestCase(unittest.TestCase):
 
         self.cpu.write_V(0x1, 0)
         self.cpu.write_V(0x2, 0)
-        self.cpu.opcode_DXYN(0x1, 0x2, 5);
+        self.cpu.opcode_DXYK(0x1, 0x2, 5);
 
         self.assert_memory_address_8bit_value(Cpu.DISPLAY_RESERVED_START_ADDRESS, 0x80)
 
         # calling twice should clear the sprite and set the flag
-        self.cpu.opcode_DXYN(1, 2, 5);
+        self.cpu.opcode_DXYK(1, 2, 5);
 
         self.assert_memory_address_16bit_value(Cpu.REGISTER_I_ADDRESS, 0x300)
 
@@ -485,7 +530,7 @@ class CpuTestCase(unittest.TestCase):
         y = 0xA
         self.cpu.write_V(0xA, x)
         self.cpu.write_V(0xB, y)
-        self.cpu.opcode_DXYN(0xA, 0xB, 15)
+        self.cpu.opcode_DXYK(0xA, 0xB, 15)
 
         self.assert_data_register_value(0xF, 0)
         for i in range(len(sprite)):
@@ -515,7 +560,7 @@ class CpuTestCase(unittest.TestCase):
         y = 0x0
         self.cpu.write_V(0xA, x)
         self.cpu.write_V(0xB, y)
-        self.cpu.opcode_DXYN(0xA, 0xB, 15)
+        self.cpu.opcode_DXYK(0xA, 0xB, 15)
 
         self.assert_data_register_value(0xF, 0)
 
@@ -566,6 +611,10 @@ class CpuTestCase(unittest.TestCase):
 
         self.assert_memory_address_16bit_value(Cpu.REGISTER_PC_ADDRESS, 0x200)
         self.assert_data_register_value(0xA, 0xF)
+
+    def test_opcode_FX00_should_set_pitch_to_VX(self):
+        # TODO: impl
+        pass
 
     def test_opcode_FX07_should_set_register_to_delay_timer_value(self):
         self.memory.write_8bit(Cpu.REGISTER_DT_ADDRESS, 0xD)
