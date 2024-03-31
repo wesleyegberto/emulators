@@ -50,9 +50,9 @@ class Cpu:
         self.opcodes_map = {
             0x00E0: lambda _: self.opcode_00E0(),
             0x00EE: lambda _: self.opcode_00EE(),
-            0x0000: lambda opcode: self.opcode_0MMM(self.get_opcode_value_MMM(opcode)),
-            0x1000: lambda opcode: self.opcode_1MMM(self.get_opcode_value_MMM(opcode)),
-            0x2000: lambda opcode: self.opcode_2MMM(self.get_opcode_value_MMM(opcode)),
+            0x0000: lambda opcode: self.opcode_0NNN(self.get_opcode_value_NNN(opcode)),
+            0x1000: lambda opcode: self.opcode_1NNN(self.get_opcode_value_NNN(opcode)),
+            0x2000: lambda opcode: self.opcode_2NNN(self.get_opcode_value_NNN(opcode)),
             0x3000: lambda opcode: self.opcode_3XKK(self.get_opcode_value_X(opcode), self.get_opcode_value_KK(opcode)),
             0x4000: lambda opcode: self.opcode_4XKK(self.get_opcode_value_X(opcode), self.get_opcode_value_KK(opcode)),
             0x5000: lambda opcode: self.opcode_5XY0(self.get_opcode_value_X(opcode), self.get_opcode_value_Y(opcode)),
@@ -68,8 +68,8 @@ class Cpu:
             0x8007: lambda opcode: self.opcode_8XY7(self.get_opcode_value_X(opcode), self.get_opcode_value_Y(opcode)),
             0x800E: lambda opcode: self.opcode_8XYE(self.get_opcode_value_X(opcode), self.get_opcode_value_Y(opcode)),
             0x9000: lambda opcode: self.opcode_9XY0(self.get_opcode_value_X(opcode), self.get_opcode_value_Y(opcode)),
-            0xA000: lambda opcode: self.opcode_AMMM(self.get_opcode_value_MMM(opcode)),
-            0xB000: lambda opcode: self.opcode_BMMM(self.get_opcode_value_MMM(opcode)),
+            0xA000: lambda opcode: self.opcode_ANNN(self.get_opcode_value_NNN(opcode)),
+            0xB000: lambda opcode: self.opcode_BNNN(self.get_opcode_value_NNN(opcode)),
             0xC000: lambda opcode: self.opcode_CXKK(self.get_opcode_value_X(opcode), self.get_opcode_value_KK(opcode)),
             0xD000: lambda opcode: self.opcode_DXYK(self.get_opcode_value_X(opcode), self.get_opcode_value_Y(opcode), self.get_opcode_value_K(opcode)),
             0xE09E: lambda opcode: self.opcode_EX9E(self.get_opcode_value_X(opcode)),
@@ -177,8 +177,8 @@ class Cpu:
         """ Extract value KK from opcode with format 00KK. """
         return opcode & 0xFF
 
-    def get_opcode_value_MMM(self, opcode):
-        """ Extract value MMM from opcode with format 0MMM. """
+    def get_opcode_value_NNN(self, opcode):
+        """ Extract value NNN from opcode with format 0NNN. """
         return opcode & 0xFFF
 
     def step_pc(self):
@@ -292,14 +292,14 @@ class Cpu:
         self.validate_memory_access_address(addr)
         self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, addr)
 
-    def opcode_0MMM(self, addr=None):
-        """ Jump to a machine code routine at MMM.
+    def opcode_0NNN(self, addr=None):
+        """ Jump to a machine code routine at NNN.
 
         This instruction is only used on the old computers on which Chip-8 was
         originally implemented. It is ignored by modern interpreters.
         """
 
-        raise Exception('0MMM is not implemented')
+        raise Exception('0NNN is not implemented')
 
     def opcode_00E0(self):
         """ Clear the display. """
@@ -317,19 +317,19 @@ class Cpu:
         address = self.pop_address_from_stack()
         self.write_register_pc(address)
 
-    def opcode_1MMM(self, addr):
-        """ Jump to location MMM.
+    def opcode_1NNN(self, addr):
+        """ Jump to location NNN.
 
-        The interpreter sets the program counter to MMM.
+        The interpreter sets the program counter to NNN.
         """
         self.validate_memory_access_address(addr)
         self.write_register_pc(addr)
 
-    def opcode_2MMM(self, addr):
-        """ Call subroutine at MMM.
+    def opcode_2NNN(self, addr):
+        """ Call subroutine at NNN.
 
         The interpreter increments the stack pointer, then puts the current PC
-        on the top of the stack. The PC is then set to MMM.
+        on the top of the stack. The PC is then set to NNN.
         """
 
         current_addr = self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS)
@@ -500,19 +500,19 @@ class Cpu:
         if self.read_V(x) is not self.read_V(y):
             self.step_pc()
 
-    def opcode_AMMM(self, addr):
-        """ Set I = MMM.
+    def opcode_ANNN(self, addr):
+        """ Set I = NNN.
 
-        The value of register I is set to MMM.
+        The value of register I is set to NNN.
         """
         self.validate_memory_access_address(addr)
         self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, addr)
 
-    def opcode_BMMM(self, addr):
+    def opcode_BNNN(self, addr):
         """
-        Jump to location MMM + V0.
+        Jump to location NNN + V0.
 
-        The program counter is set to MMM Plus the value of V0.
+        The program counter is set to NNN Plus the value of V0.
         """
         v0_value = self.read_V(0x0)
         addr = addr + (v0_value * 2) # double as PC uses 2-bytes (?)
