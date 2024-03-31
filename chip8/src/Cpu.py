@@ -162,9 +162,13 @@ class Cpu:
         # 2 - increase PC
         # 3 - check interruption (DT)
         # 4 - check ST to beep
+
+        # TODO: sync cycle
         while True:
             # TODO: clock
             self.execute_cpu(1)
+            # TODO: generate interrupts
+            # TODO: emulate graphics
             self.check_dt()
             self.check_beep()
 
