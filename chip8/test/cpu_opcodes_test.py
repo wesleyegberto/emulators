@@ -4,12 +4,17 @@ import sys
 sys.path.append('src')
 
 from Cpu import Cpu
+from Display import *
+from Keyboard import Keyboard
+from Memory import Memory
 
 class CpuOpcodesTestCase(unittest.TestCase):
     def setUp(self):
-        self.cpu = Cpu()
-        self.memory = self.cpu.memory
-        self.keyboard = self.cpu.keyboard
+        self.memory = Memory()
+        self.display = Display(self.memory)
+        self.keyboard = Keyboard()
+
+        self.cpu = Cpu(self.memory, self.display, self.keyboard)
 
     def assert_equal_hex(self, actual, expected):
         self.assertEqual(actual, expected, "Hex: {} != {}".format(hex(actual), hex(expected)))
@@ -402,7 +407,7 @@ class CpuOpcodesTestCase(unittest.TestCase):
 
         v9_value = self.cpu.read_V(0x9)
         self.assertTrue(v9_value < 0x6)
-        self.assert_memory_address_8bit_value(Cpu.REGISTER_RANDOM_NUMBER, v9_value)
+        self.assert_memory_address_8bit_value(Cpu.REGISTER_RANDOM_NUMBER_ADDRESS, v9_value)
 
     def test_opcode_DXYN_should_write_sprite_to_memory_location_I(self):
         self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, 0x200)
@@ -422,11 +427,11 @@ class CpuOpcodesTestCase(unittest.TestCase):
 
         self.assert_memory_address_16bit_value(Cpu.REGISTER_I_ADDRESS, 0x200)
         # assert the display memory
-        self.assert_memory_address_8bit_value(Cpu.DISPLAY_RESERVED_START_ADDRESS, 0xF0)
-        self.assert_memory_address_8bit_value(Cpu.DISPLAY_RESERVED_START_ADDRESS + 8, 0xD0)
-        self.assert_memory_address_8bit_value(Cpu.DISPLAY_RESERVED_START_ADDRESS + 16, 0xF0)
-        self.assert_memory_address_8bit_value(Cpu.DISPLAY_RESERVED_START_ADDRESS + 24, 0xD0)
-        self.assert_memory_address_8bit_value(Cpu.DISPLAY_RESERVED_START_ADDRESS + 32, 0xF0)
+        self.assert_memory_address_8bit_value(Cpu.MEMORY_DISPLAY_AREA_START_ADDRESS, 0xF0)
+        self.assert_memory_address_8bit_value(Cpu.MEMORY_DISPLAY_AREA_START_ADDRESS + 8, 0xD0)
+        self.assert_memory_address_8bit_value(Cpu.MEMORY_DISPLAY_AREA_START_ADDRESS + 16, 0xF0)
+        self.assert_memory_address_8bit_value(Cpu.MEMORY_DISPLAY_AREA_START_ADDRESS + 24, 0xD0)
+        self.assert_memory_address_8bit_value(Cpu.MEMORY_DISPLAY_AREA_START_ADDRESS + 32, 0xF0)
 
         # assert that there wasn't any collision
         self.assert_data_register_value(0xF, 0)
@@ -441,7 +446,7 @@ class CpuOpcodesTestCase(unittest.TestCase):
         self.cpu.write_V(0x2, 0)
         self.cpu.opcode_DXYK(0x1, 0x2, 5);
 
-        self.assert_memory_address_8bit_value(Cpu.DISPLAY_RESERVED_START_ADDRESS, 0x80)
+        self.assert_memory_address_8bit_value(Cpu.MEMORY_DISPLAY_AREA_START_ADDRESS, 0x80)
 
         # calling twice should clear the sprite and set the flag
         self.cpu.opcode_DXYK(1, 2, 5);
@@ -449,15 +454,15 @@ class CpuOpcodesTestCase(unittest.TestCase):
         self.assert_memory_address_16bit_value(Cpu.REGISTER_I_ADDRESS, 0x300)
 
         # assert the display memory
-        self.assert_memory_address_8bit_value(Cpu.DISPLAY_RESERVED_START_ADDRESS, 0x0)
-        self.assert_memory_address_8bit_value(Cpu.DISPLAY_RESERVED_START_ADDRESS + 8, 0x0)
-        self.assert_memory_address_8bit_value(Cpu.DISPLAY_RESERVED_START_ADDRESS + 16, 0x0)
-        self.assert_memory_address_8bit_value(Cpu.DISPLAY_RESERVED_START_ADDRESS + 24, 0x0)
-        self.assert_memory_address_8bit_value(Cpu.DISPLAY_RESERVED_START_ADDRESS + 32, 0x0)
+        self.assert_memory_address_8bit_value(Cpu.MEMORY_DISPLAY_AREA_START_ADDRESS, 0x0)
+        self.assert_memory_address_8bit_value(Cpu.MEMORY_DISPLAY_AREA_START_ADDRESS + 8, 0x0)
+        self.assert_memory_address_8bit_value(Cpu.MEMORY_DISPLAY_AREA_START_ADDRESS + 16, 0x0)
+        self.assert_memory_address_8bit_value(Cpu.MEMORY_DISPLAY_AREA_START_ADDRESS + 24, 0x0)
+        self.assert_memory_address_8bit_value(Cpu.MEMORY_DISPLAY_AREA_START_ADDRESS + 32, 0x0)
 
         self.assert_data_register_value(0xF, 1)
 
-    def test_opcode_DXYN_should_write_sprite_given_screen_position(self):
+    def test_opcode_DXYN_should_write_sprite_given_screen_position_when_starts_beginning_byte(self):
         sprite_addr = 0x300
         self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, sprite_addr)
 
@@ -484,19 +489,68 @@ class CpuOpcodesTestCase(unittest.TestCase):
             addr = sprite_addr + i
             self.memory.write_8bit(addr, sprite[i])
 
-        x = 0x10
-        y = 0xA
+        x = 0x8
+        y = 0x2
         self.cpu.write_V(0xA, x)
         self.cpu.write_V(0xB, y)
+
         self.cpu.opcode_DXYK(0xA, 0xB, 15)
 
         self.assert_data_register_value(0xF, 0)
+
         for i in range(len(sprite)):
-            offset = (y + i) * Cpu.DISPLAY_ROW_WIDTH_OFFSET + x
-            addr = Cpu.DISPLAY_RESERVED_START_ADDRESS + offset
+            addr = calculate_memory_address_offset(x, y + i)
 
             screen_row = self.memory.read_8bit(addr)
-            self.assertEqual(screen_row, sprite[i], f'Row {i} did not match')
+            self.assertEqual(screen_row, sprite[i], f'Row {i} did not match; {bin(screen_row)} != {bin(sprite[i])}')
+
+    def test_opcode_DXYN_should_write_sprite_given_screen_position_when_starts_middle_byte(self):
+        sprite_addr = 0x300
+        self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, sprite_addr)
+
+        # sprite of cowboy
+        sprite = [
+            0b00111000,
+            0b01111100,
+            0b00111000,
+            0b00010000,
+            0b01111100,
+            0b10111010,
+            0b10111010,
+            0b10111010,
+            0b10111010,
+            0b00111000,
+            0b00101000,
+            0b00101000,
+            0b00101000,
+            0b00101000,
+            0b01101100,
+        ]
+
+        for i in range(len(sprite)):
+            addr = sprite_addr + i
+            self.memory.write_8bit(addr, sprite[i])
+
+        x = 0x4
+        y = 0x0
+        self.cpu.write_V(0xA, x)
+        self.cpu.write_V(0xB, y)
+
+        self.cpu.opcode_DXYK(0xA, 0xB, 15)
+
+        self.assert_data_register_value(0xF, 0)
+
+        mem_byte_offset = 4
+        for i in range(len(sprite)):
+            addr = calculate_memory_address_offset(x, y + i)
+
+            screen_row = self.memory.read_8bit(addr)
+            expected_row = sprite[i] >> mem_byte_offset
+            self.assertEqual(screen_row, expected_row, f'First part of row {i} did not match; {bin(screen_row)} != {bin(expected_row)}')
+
+            screen_row_second_part = self.memory.read_8bit(addr + 1)
+            expected_row = (sprite[i] & (0xFF >> (8 - mem_byte_offset))) << (8 - mem_byte_offset)
+            self.assertEqual(screen_row_second_part, expected_row, f'Second part of row {i} did not match; {bin(screen_row)} != {bin(expected_row)}')
 
     def test_opcode_DXYN_should_write_to_start_of_screen_when_starting_at_end(self):
         sprite_addr = 0x400
@@ -504,31 +558,37 @@ class CpuOpcodesTestCase(unittest.TestCase):
 
         # sprite of reactangle
         sprite = [
-            0b01111100,
-            0b01000100,
-            0b01000100,
-            0b01111100,
+            0b11111111,
+            0b10100101,
+            0b10100101,
+            0b11111111,
         ]
 
         for i in range(len(sprite)):
             addr = sprite_addr + i
             self.memory.write_8bit(addr, sprite[i])
 
-        x = 0x45
+        x = 0x3C # will splite the split in half
         y = 0x0
         self.cpu.write_V(0xA, x)
         self.cpu.write_V(0xB, y)
-        self.cpu.opcode_DXYK(0xA, 0xB, 15)
+
+        self.cpu.opcode_DXYK(0xA, 0xB, 4)
 
         self.assert_data_register_value(0xF, 0)
 
-        expected_x = 0x5
+        mem_byte_offset = 4
         for i in range(len(sprite)):
-            offset = (y + i) * Cpu.DISPLAY_ROW_WIDTH_OFFSET + expected_x
-            addr = Cpu.DISPLAY_RESERVED_START_ADDRESS + offset
+            addr = calculate_memory_address_offset(x, y + i)
 
             screen_row = self.memory.read_8bit(addr)
-            self.assertEqual(screen_row, sprite[i], f'Row {i} did not match')
+            expected_row = sprite[i] >> mem_byte_offset
+            self.assertEqual(screen_row, expected_row, f'First part of row {i} did not match; {bin(screen_row)} != {bin(expected_row)}')
+
+            start_screen_row = self.memory.read_8bit(addr - x)
+            expected_row = (sprite[i] & (0xFF >> (8 - mem_byte_offset))) << (8 - mem_byte_offset)
+            self.assertEqual(start_screen_row, expected_row, f'Second part of row {i} did not match; {bin(start_screen_row)} != {bin(expected_row)}')
+
 
     def test_opcode_EX9E_should_skip_next_instruction_if_given_key_was_pressed(self):
         self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, 0x200)

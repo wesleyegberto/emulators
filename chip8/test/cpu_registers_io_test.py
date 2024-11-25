@@ -4,11 +4,17 @@ import sys
 sys.path.append('src')
 
 from Cpu import Cpu
+from Display import Display
+from Keyboard import Keyboard
+from Memory import Memory
 
 class CpuRegistersTestCase(unittest.TestCase):
     def setUp(self):
-        self.cpu = Cpu()
-        self.memory = self.cpu.memory
+        self.memory = Memory()
+        self.display = Display(self.memory)
+        self.keyboard = Keyboard()
+
+        self.cpu = Cpu(self.memory, self.display, self.keyboard)
 
     def test_allowed_memory_access_region(self):
         self.cpu.validate_memory_access_address(0x200)

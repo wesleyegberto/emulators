@@ -1,6 +1,9 @@
 run:
 	python3 ./src/main.py
 
+env:
+	python3 -m venv .penv/
+
 deps:
 	pip3 install -r requirements.txt
 

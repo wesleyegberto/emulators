@@ -1,3 +1,7 @@
+# Memory area reserved for builtin fonts
+MEMORY_FONT_AREA_START_ADDRESS = 0x000
+MEMORY_FONT_AREA_END_ADDRESS = 0x050
+
 class Memory:
     """ Memory with 4 KB
 
@@ -15,7 +19,7 @@ class Memory:
         self.memory = [0] * 4096
 
         # each digit is 5 bytes long (8x5 pixels)
-        self.memory[:80] = [
+        self.memory[MEMORY_FONT_AREA_START_ADDRESS:MEMORY_FONT_AREA_END_ADDRESS] = [
             0xF0, 0x90, 0x90, 0x90, 0xF0, # 0x0 => 0
             0x20, 0x60, 0x20, 0x20, 0x70, # 0x5 => 1
             0xF0, 0x10, 0xF0, 0x80, 0xF0, # 0xA => 2

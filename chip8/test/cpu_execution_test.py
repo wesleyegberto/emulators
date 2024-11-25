@@ -4,12 +4,17 @@ import sys
 sys.path.append('src')
 
 from Cpu import Cpu
+from Display import Display
+from Keyboard import Keyboard
+from Memory import Memory
 
 class CpuExecutionTestCase(unittest.TestCase):
     def setUp(self):
-        self.cpu = Cpu()
-        self.memory = self.cpu.memory
-        self.keyboard = self.cpu.keyboard
+        self.memory = Memory()
+        self.display = Display(self.memory)
+        self.keyboard = Keyboard()
+
+        self.cpu = Cpu(self.memory, self.display, self.keyboard)
 
     def assert_equal_hex(self, actual, expected):
         self.assertEqual(actual, expected, "Hex: {} != {}".format(hex(actual), hex(expected)))
@@ -109,7 +114,7 @@ class CpuExecutionTestCase(unittest.TestCase):
         self.memory.write_8bit(0xFA0, 0xF0)
         self.memory.write_8bit(0xFFF, 0xF0)
 
-        self.cpu.execute_cpu(1)
+        self.cpu.execute_cpu_cycle()
 
         for addr in range(0xF00, 0xFFF):
             self.assert_equal_hex(self.memory.read_8bit(addr), 0x0)

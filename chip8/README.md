@@ -94,7 +94,7 @@ The implementation can be created from [RCA COSMAC VIP CDP18S711 Instruction Man
 Chip-8 language used a 64x32 pixel monochrome display and it draws graphics on screen through the use of sprites.
 
 A sprite is a group of bytes which are a binary representation of the desired picture.
-Sprites may be up to 15 bytes (1 byte wide and at most 5 bytes high), for a possible sprite size of 8x15.
+Sprites may be up to 15 bytes (1 byte wide and at most 15 bytes high), for a possible sprite size of 8x15.
 
 The sprite is positioned at screen with the format of MxN:
 
@@ -103,7 +103,7 @@ The sprite is positioned at screen with the format of MxN:
 
 ![](./img/display.png)
 
-The pixels to be shown are defined in the last 256 bytes section of the RAM (from 0xEFF to 0xFFF).
+The pixels to be shown are defined in the last 256 bytes section of the RAM (from 0xF00 to 0xFFF).
 The pixels are defined by each RAM position:
 
 - 1 bit represents a white spot
@@ -166,8 +166,8 @@ V B N M
     * [ ] Handle `DT`
     * [ ] Handle `ST`
     * [x] Implement instruction decode
-    * [ ] Implement cycle
-    * [ ] Connect to main loop
+    * [x] Implement cycle
+    * [x] Connect to main loop
 * [ ] Memory
     * [x] Memory: bultin fonts
     * [x] Memory: verify if needs to reserve memory for call stack and registers (`I`, `PC`, `SP`, `V0` to `VF`)
@@ -177,7 +177,7 @@ V B N M
     * [x] Implement Pygame keyboard input controller
     * [ ] Connect to main loop
 * [ ] Screen
-    * [ ] Implement display
+    * [x] Implement display
     * [ ] Implement rendering with Pygame
     * [ ] Connect to main loop
 * [ ] Sound

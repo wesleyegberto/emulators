@@ -1,9 +1,11 @@
-from matplotlib import pyplot as plt
-import time
+import pygame
 import random
+import time
+import sys
 
 from Memory import Memory
 from Keyboard import Keyboard
+from Display import *
 
 class Cpu:
     """ CPU with registers and cycles """
@@ -11,40 +13,47 @@ class Cpu:
     """ Instruction length: 2 bytes """
     OPCODE_LENGTH = 0x2
 
-    """ Program area for opcodes of 2 bytes long """
-    PROGRAM_CODE_AREA_START = 0x200
+    """ Memory area reserved for builtin fonts """
+    MEMORY_FONT_AREA_START_ADDRESS = 0x000
+    MEMORY_FONT_AREA_END_ADDRESS = 0x050
 
-    INTERPRETER_START_RESERVED_AREA = 0xEA0
+    """ Memory area reserved for program opcodes of 2 bytes long """
+    MEMORY_PROGRAM_CODE_AREA_START_ADDRESS = 0x200
+    MEMORY_PROGRAM_CODE_AREA_END_ADDRESS = 0xE9F
 
-    """ Stack area has size of 12 x 2-byte """
-    STACK_START_ADDRESS = 0xEA0 # Addr 0xEA0 + REGISTER_SP_ADDRESS
-    STACK_END_ADDRESS = 0xEC0 # 16 levels of nested subroutines
+    MEMORY_INTERPRETER_AREA_START_ADDRESS = 0xEA0
+
+    """ Memory area reserved for stack (size of 12 x 2-byte) """
+    MEMORY_STACK_START_ADDRESS = 0xEA0 # Addr 0xEA0 + REGISTER_SP_ADDRESS
+    MEMORY_STACK_END_ADDRESS = 0xEBF # 16 levels of nested subroutines
 
     # internal registers (implemented using the memory)
     REGISTER_PC_ADDRESS = 0xED0 # 16-bit program counter
     REGISTER_I_ADDRESS = 0xED2 # 16-bit
     REGISTER_SP_ADDRESS = 0xED4 # 8-bit stack pointer
+
     REGISTER_DT_ADDRESS = 0xED5 # 8-bit delay timer (decremented at a rate of 60Hz)
     REGISTER_ST_ADDRESS = 0xED6 # 8-bit sound timer (decremented at a rate of 60Hz)
-    REGISTER_RANDOM_NUMBER = 0xED9 # 8-bit
+
+    REGISTER_RANDOM_NUMBER_ADDRESS = 0xED9 # 8-bit
 
     # data registers start memory position: 0xEF0 + V (where V is a variable from V0 to VF)
-    REGISTERS_DATA_START_ADDRESS = 0xEF0
+    MEMORY_REGISTERS_DATA_START_ADDRESS = 0xEF0
     # reserved data register VF
-    REGISTER_DATA_VF = 0xEFF
+    REGISTER_DATA_VF_ADDRESS = 0xEFF
 
-    DISPLAY_RESERVED_START_ADDRESS = 0xF00
-    DISPLAY_RESERVED_END_ADDRESS = 0xFFF
-    DISPLAY_ROW_WIDTH_OFFSET = 64 // 8 # 8 bytes by row
-    DISPLAY_WIDTH = 0x3F
-    DISPLAY_HEIGHT = 0x1F
+    """ Memory area reserved for screen bits (248 bytes) """
+    MEMORY_DISPLAY_AREA_START_ADDRESS = 0xF00
+    MEMORY_DISPLAY_AREA_END_ADDRESS = 0xFFF
 
     # number of cycles to execute by the CPU
-    NUMBER_CYCLES_BY_EXECUTION = 23;
+    # NUMBER_CYCLES_BY_EXECUTION = 23;
 
-    def __init__(self):
-        self.memory = Memory()
-        self.keyboard = Keyboard()
+    def __init__(self, memory: Memory, display: Display, keyboard: Keyboard):
+        self.memory = memory
+        self.keyboard = keyboard
+        self.display = display
+
         self.cyclesCounter = 0;
 
         self.opcodes_masks = [
@@ -138,14 +147,14 @@ class Cpu:
         """
 
         # program start at memory address 0x200
-        self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, Cpu.PROGRAM_CODE_AREA_START)
+        self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, Cpu.MEMORY_PROGRAM_CODE_AREA_START_ADDRESS)
 
-        self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, Cpu.PROGRAM_CODE_AREA_START)
+        self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, Cpu.MEMORY_PROGRAM_CODE_AREA_START_ADDRESS)
 
         # stack points start at reserved memory address
-        self.memory.write_8bit(Cpu.REGISTER_SP_ADDRESS, self.STACK_START_ADDRESS)
+        self.memory.write_8bit(Cpu.REGISTER_SP_ADDRESS, Cpu.MEMORY_STACK_START_ADDRESS)
 
-        # registers for sound control
+        # registers for dalay and sound timers
         self.memory.write_8bit(Cpu.REGISTER_DT_ADDRESS, 0x00)
         self.memory.write_8bit(Cpu.REGISTER_ST_ADDRESS, 0x00)
 
@@ -163,35 +172,55 @@ class Cpu:
         # 3 - check interruption (DT)
         # 4 - check ST to beep
 
-        # TODO: sync cycle
         while True:
-            # TODO: clock
-            self.execute_cpu(1)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+            self.execute_cpu_cycle()
+
             # TODO: generate interrupts
-            # TODO: emulate graphics
+            self.update_timers()
+
+            # emulate graphics
+            self.display.render()
+
             self.check_dt()
             self.check_beep()
 
-    def execute_cpu(self, cycles):
-        """ CPU execution.
+            # clock = pygame.time.Clock()
+            # clock.tick(60) # fps
+            # simulate 60Hz refresh rate
+            time.sleep(1 / 60)
+
+    def execute_cpu_cycle(self):
+        """ CPU cycle execution.
+
         Steps:
         - fetch instruction
         - decode instruction
+        - step PC
         - execute
         """
 
         # fetch the opcode
         pc = self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS)
         opcode = self.memory.read_16bit(pc)
-        self.step_pc()
+
+        # empty memory just do nothing
+        if opcode == 0x0000:
+            return
 
         # decode it
         decoded_opcode = self.decode_opcode(opcode)
-
+        # step PC
+        self.step_pc()
         # execute it
         decoded_opcode()
 
     def decode_opcode(self, opcode):
+        # print('CPU - opcode', hex(opcode))
         opcode_function = None
         for opcode_mask in self.opcodes_masks:
             if opcode & opcode_mask['mask'] == opcode_mask['opcode']:
@@ -203,6 +232,14 @@ class Cpu:
 
         return lambda: opcode_function(opcode)
 
+    def update_timers(self):
+        # update dalay timer
+        if self.memory.read_8bit(self.REGISTER_DT_ADDRESS) > 0:
+            self.memory.write_8bit(self.REGISTER_DT_ADDRESS, self.memory.read_8bit(self.REGISTER_DT_ADDRESS) - 1)
+
+        # update sound timer
+        if self.memory.read_8bit(self.REGISTER_ST_ADDRESS) > 0:
+            self.memory.write_8bit(self.REGISTER_ST_ADDRESS, self.memory.read_8bit(self.REGISTER_ST_ADDRESS) - 1)
 
     def get_opcode_value_X(self, opcode):
         """ Extract value X from opcode with format 0X00. """
@@ -253,20 +290,20 @@ class Cpu:
     def validate_memory_access_address(self, address):
         """ Validate if the given address is allowed to be accessed. """
 
-        if address < Cpu.PROGRAM_CODE_AREA_START or address >= Cpu.INTERPRETER_START_RESERVED_AREA:
+        if address < Cpu.MEMORY_PROGRAM_CODE_AREA_START_ADDRESS or address >= Cpu.MEMORY_INTERPRETER_AREA_START_ADDRESS:
             raise Exception('Illegal memory access: %s' % hex(address))
 
     def calculate_data_register_memory_address(self, register):
         """ Return the memory position for the given register (0 to F). """
 
         self.validate_data_register(register)
-        return Cpu.REGISTERS_DATA_START_ADDRESS + register
+        return Cpu.MEMORY_REGISTERS_DATA_START_ADDRESS + register
 
     def get_stack_current_memory_address(self):
         """ Return the current address pointed by register `SP`. """
 
         sp_value = self.memory.read_8bit(Cpu.REGISTER_SP_ADDRESS)
-        return Cpu.STACK_START_ADDRESS + sp_value
+        return Cpu.MEMORY_STACK_START_ADDRESS + sp_value
 
     def read_top_address_in_stack(self):
         """ Return the current address on top of stack. """
@@ -290,7 +327,7 @@ class Cpu:
         self.memory.write_8bit(Cpu.REGISTER_SP_ADDRESS, sp_value)
 
         stack_addr = self.get_stack_current_memory_address()
-        if stack_addr == Cpu.STACK_END_ADDRESS:
+        if stack_addr > Cpu.MEMORY_STACK_END_ADDRESS:
             raise Exception('Stack overflow')
 
         self.memory.write_16bit(stack_addr, addr)
@@ -301,7 +338,7 @@ class Cpu:
 
     def write_flag(self, value):
         """ Store a value into register flag VF """
-        self.memory.write_8bit(Cpu.REGISTER_DATA_VF, value)
+        self.memory.write_8bit(Cpu.REGISTER_DATA_VF_ADDRESS, value)
 
     def read_V(self, register):
         """ Read a value from one of registers V0-VF """
@@ -319,8 +356,6 @@ class Cpu:
 
         char = self.read_font(value)
         sprite = [self.bitfield(val) for val in char]
-        plt.imshow(sprite, cmap='Greys', interpolation='nearest')
-        plt.show()
 
     def bitfield(self, n):
         bits = [int(digit) for digit in bin(n)[2:]]
@@ -347,7 +382,7 @@ class Cpu:
     def opcode_00E0(self):
         """ Clear the display. """
 
-        for addr in range(self.DISPLAY_RESERVED_START_ADDRESS, self.DISPLAY_RESERVED_END_ADDRESS):
+        for addr in range(self.MEMORY_DISPLAY_AREA_START_ADDRESS, self.MEMORY_DISPLAY_AREA_END_ADDRESS):
             self.memory.write_8bit(addr, 0x0)
 
     def opcode_00EE(self):
@@ -570,7 +605,7 @@ class Cpu:
         ANDed with the value KK. The results are stored in VX.
         """
         random_value = random.randint(0, 0xFF) & k
-        self.memory.write_8bit(Cpu.REGISTER_RANDOM_NUMBER, random_value)
+        self.memory.write_8bit(Cpu.REGISTER_RANDOM_NUMBER_ADDRESS, random_value)
         self.write_V(x, random_value)
 
     def opcode_DXYK(self, vx, vy, nibble):
@@ -583,32 +618,57 @@ class Cpu:
         """
 
         addr = self.memory.read_16bit(Cpu.REGISTER_I_ADDRESS)
-        x = self.read_V(vx) & Cpu.DISPLAY_WIDTH
-        y = self.read_V(vy) & Cpu.DISPLAY_HEIGHT
-        # TODO: read 8 bit and split
+        x = self.read_V(vx) & Display.WIDTH
+        y = self.read_V(vy) & Display.HEIGHT
 
         collision_flag = 0
 
-        for l in range(0, nibble):
-            # calculate the offset to transform the screen MxN to memory array position
-            line_offset = (y + l) * self.DISPLAY_ROW_WIDTH_OFFSET + x
-            # display pixel address in memory
-            display_addr = self.DISPLAY_RESERVED_START_ADDRESS + line_offset
-            if display_addr > self.DISPLAY_RESERVED_END_ADDRESS:
-                raise Exception('Memory out of display: %s' % hex(display_addr))
+        # sprite line
+        for l in range(nibble):
+            mem_byte_offset = x % PIXELS_PER_BYTE
 
-            # row of 8 bits
-            sprite_row = self.memory.read_8bit(addr)
-            curr_screen_row = self.memory.read_8bit(display_addr)
+            count = 1
+            if mem_byte_offset > 0:
+                count = 2
 
-            # only apply XOR flag rule if the current pixel is on
-            if curr_screen_row > 0:
-                collision_flag = collision_flag | sprite_row & curr_screen_row
+            # j will be greater 1 if X start in the middle of a memory byte
+            for j in range(count):
+                # calculate the offset to transform the screen MxN to memory array position (even if in the middle of byte)
+                screen_addr = calculate_memory_address_offset(x, (y + l)) + j
+                if screen_addr > self.MEMORY_DISPLAY_AREA_END_ADDRESS:
+                    raise Exception('Memory out of display: %s' % hex(screen_addr))
 
-            # XOEed the sprite row into the screen, turning it off if there is a collision
-            draw_result = (sprite_row ^ curr_screen_row) & sprite_row
+                # x_calc = calculate_x_from_memory_address(screen_addr)
+                # print('X = ', x, '; X calc = ', x_calc)
+                # if x != x_calc:
+                #     screen_addr = screen_addr - x
 
-            self.memory.write_8bit(display_addr, draw_result)
+                # row of 8 bits
+                sprite_row = self.memory.read_8bit(addr)
+                # offset sprite line in the middle of memory address byte
+                if mem_byte_offset > 0:
+                    # calcutes the sprite line byte to fill in corresponding screen byte (after offset)
+                    if j > 0:
+                        sprite_row = (sprite_row & (0xFF >> (8 - mem_byte_offset))) << (8 - mem_byte_offset)
+                    else:
+                        sprite_row = sprite_row >> mem_byte_offset
+                # print('\tSprite row at', hex(addr), '->', bin(sprite_row), 'offset', mem_byte_offset)
+
+                curr_screen_row = self.memory.read_8bit(screen_addr)
+                # print('\tDisplay row at', hex(screen_addr), '->', hex(curr_screen_row))
+
+                # only apply XOR flag rule if the current pixel is on
+                if curr_screen_row > 0 & collision_flag == 0:
+                    collision_flag = sprite_row & curr_screen_row
+
+                # XOEed the sprite row into the screen, turning it off if there is a collision
+                draw_result = (sprite_row ^ curr_screen_row) & sprite_row
+
+                # print('\tWriting', hex(screen_addr), '->', bin(draw_result))
+                # TODO: warp around the screen to not get outbound
+                self.memory.write_8bit(screen_addr, draw_result)
+
+            # next sprite line
             addr += 0x1
 
         if (collision_flag > 0):
@@ -660,7 +720,7 @@ class Cpu:
         """
         key_pressed = None
         while key_pressed is None:
-            time.sleep(0.200)
+            time.sleep(0.200) # wait to press
             key_pressed = self.keyboard.read_key()
         self.write_V(x, key_pressed)
 
