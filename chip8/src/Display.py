@@ -1,5 +1,5 @@
 import pygame
-from Memory import MEMORY_FONT_AREA_END_ADDRESS, MEMORY_FONT_AREA_START_ADDRESS, Memory
+from Memory import Memory
 
 # each pixel is represented as 4 pixels
 PIXEL_SCALE = 8
