@@ -220,7 +220,6 @@ class Cpu:
         decoded_opcode()
 
     def decode_opcode(self, opcode):
-        # print('CPU - opcode', hex(opcode))
         opcode_function = None
         for opcode_mask in self.opcodes_masks:
             if opcode & opcode_mask['mask'] == opcode_mask['opcode']:
@@ -638,11 +637,6 @@ class Cpu:
                 if screen_addr > self.MEMORY_DISPLAY_AREA_END_ADDRESS:
                     raise Exception('Memory out of display: %s' % hex(screen_addr))
 
-                # x_calc = calculate_x_from_memory_address(screen_addr)
-                # print('X = ', x, '; X calc = ', x_calc)
-                # if x != x_calc:
-                #     screen_addr = screen_addr - x
-
                 # row of 8 bits
                 sprite_row = self.memory.read_8bit(addr)
                 # offset sprite line in the middle of memory address byte
@@ -650,12 +644,13 @@ class Cpu:
                     # calcutes the sprite line byte to fill in corresponding screen byte (after offset)
                     if j > 0:
                         sprite_row = (sprite_row & (0xFF >> (8 - mem_byte_offset))) << (8 - mem_byte_offset)
+                        # if changed the row during split, warps to start of row
+                        if (calculate_memory_address_offset(x, (y + l)) // ROW_WIDTH_OFFSET) != (screen_addr // ROW_WIDTH_OFFSET):
+                            screen_addr = screen_addr - (x // PIXELS_PER_BYTE) - j # because of splited byte by j
                     else:
                         sprite_row = sprite_row >> mem_byte_offset
-                # print('\tSprite row at', hex(addr), '->', bin(sprite_row), 'offset', mem_byte_offset)
 
                 curr_screen_row = self.memory.read_8bit(screen_addr)
-                # print('\tDisplay row at', hex(screen_addr), '->', hex(curr_screen_row))
 
                 # only apply XOR flag rule if the current pixel is on
                 if curr_screen_row > 0 & collision_flag == 0:
@@ -664,7 +659,6 @@ class Cpu:
                 # XOEed the sprite row into the screen, turning it off if there is a collision
                 draw_result = (sprite_row ^ curr_screen_row) & sprite_row
 
-                # print('\tWriting', hex(screen_addr), '->', bin(draw_result))
                 # TODO: warp around the screen to not get outbound
                 self.memory.write_8bit(screen_addr, draw_result)
 

@@ -15,7 +15,7 @@ def main():
 
     # test program
     memory.write_16bit(0x200, 0xA210)
-    memory.write_16bit(0x202, 0x6100)
+    memory.write_16bit(0x202, 0x613C)
     memory.write_16bit(0x204, 0x6200)
     memory.write_16bit(0x206, 0xD125)
     memory.write_16bit(0x208, 0x613F)

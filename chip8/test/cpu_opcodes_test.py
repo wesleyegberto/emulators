@@ -585,9 +585,14 @@ class CpuOpcodesTestCase(unittest.TestCase):
             expected_row = sprite[i] >> mem_byte_offset
             self.assertEqual(screen_row, expected_row, f'First part of row {i} did not match; {bin(screen_row)} != {bin(expected_row)}')
 
-            start_screen_row = self.memory.read_8bit(addr - x)
+            addr = addr - (x // PIXELS_PER_BYTE)
+            start_screen_row = self.memory.read_8bit(addr)
             expected_row = (sprite[i] & (0xFF >> (8 - mem_byte_offset))) << (8 - mem_byte_offset)
             self.assertEqual(start_screen_row, expected_row, f'Second part of row {i} did not match; {bin(start_screen_row)} != {bin(expected_row)}')
+
+    def test_opcode_DXYN_should_write_to_top_of_screen_when_starting_at_bottom(self):
+        # TODO test vertical warp
+        pass
 
 
     def test_opcode_EX9E_should_skip_next_instruction_if_given_key_was_pressed(self):
