@@ -619,10 +619,11 @@ class Cpu:
         addr = self.memory.read_16bit(Cpu.REGISTER_I_ADDRESS)
         x = self.read_V(vx) & Display.WIDTH
         y = self.read_V(vy) & Display.HEIGHT
+        y_warped_at = -1
 
         collision_flag = 0
 
-        # sprite line
+        # sprite lines
         for l in range(nibble):
             mem_byte_offset = x % PIXELS_PER_BYTE
 
@@ -630,25 +631,36 @@ class Cpu:
             if mem_byte_offset > 0:
                 count = 2
 
+            x_warped = False
+
             # j will be greater 1 if X start in the middle of a memory byte
             for j in range(count):
                 # calculate the offset to transform the screen MxN to memory array position (even if in the middle of byte)
-                screen_addr = calculate_memory_address_offset(x, (y + l)) + j
-                if screen_addr > self.MEMORY_DISPLAY_AREA_END_ADDRESS:
-                    raise Exception('Memory out of display: %s' % hex(screen_addr))
+                screen_addr = calculate_memory_address_offset(x, y + l) + j
 
                 # row of 8 bits
                 sprite_row = self.memory.read_8bit(addr)
+
                 # offset sprite line in the middle of memory address byte
                 if mem_byte_offset > 0:
                     # calcutes the sprite line byte to fill in corresponding screen byte (after offset)
                     if j > 0:
                         sprite_row = (sprite_row & (0xFF >> (8 - mem_byte_offset))) << (8 - mem_byte_offset)
-                        # if changed the row during split, warps to start of row
-                        if (calculate_memory_address_offset(x, (y + l)) // ROW_WIDTH_OFFSET) != (screen_addr // ROW_WIDTH_OFFSET):
-                            screen_addr = screen_addr - (x // PIXELS_PER_BYTE) - j # because of splited byte by j
+
+                        # if changed the row during split, warps to start of the current row
+                        if (calculate_memory_address_offset(x, y + l) // ROW_WIDTH_OFFSET) != (screen_addr // ROW_WIDTH_OFFSET):
+                            x_warped = True
+                            screen_addr = screen_addr - (x // PIXELS_PER_BYTE) - j # because of splitted byte by j
                     else:
                         sprite_row = sprite_row >> mem_byte_offset
+
+                # if the row is out of screen warps it to the top
+                if screen_addr > MEMORY_DISPLAY_AREA_END_ADDRESS:
+                    if y_warped_at == -1:
+                        y_warped_at = l
+                    screen_addr = calculate_memory_address_offset(x, l - y_warped_at) + j
+                    if x_warped:
+                        screen_addr = screen_addr - ROW_WIDTH_OFFSET
 
                 curr_screen_row = self.memory.read_8bit(screen_addr)
 
@@ -659,7 +671,7 @@ class Cpu:
                 # XOEed the sprite row into the screen, turning it off if there is a collision
                 draw_result = (sprite_row ^ curr_screen_row) & sprite_row
 
-                # TODO: warp around the screen to not get outbound
+                # print(f'Writing {hex(screen_addr)} value {bin(draw_result)}')
                 self.memory.write_8bit(screen_addr, draw_result)
 
             # next sprite line

@@ -494,7 +494,7 @@ class CpuOpcodesTestCase(unittest.TestCase):
         self.cpu.write_V(0xA, x)
         self.cpu.write_V(0xB, y)
 
-        self.cpu.opcode_DXYK(0xA, 0xB, 15)
+        self.cpu.opcode_DXYK(0xA, 0xB, len(sprite))
 
         self.assert_data_register_value(0xF, 0)
 
@@ -536,7 +536,7 @@ class CpuOpcodesTestCase(unittest.TestCase):
         self.cpu.write_V(0xA, x)
         self.cpu.write_V(0xB, y)
 
-        self.cpu.opcode_DXYK(0xA, 0xB, 15)
+        self.cpu.opcode_DXYK(0xA, 0xB, len(sprite))
 
         self.assert_data_register_value(0xF, 0)
 
@@ -573,7 +573,7 @@ class CpuOpcodesTestCase(unittest.TestCase):
         self.cpu.write_V(0xA, x)
         self.cpu.write_V(0xB, y)
 
-        self.cpu.opcode_DXYK(0xA, 0xB, 4)
+        self.cpu.opcode_DXYK(0xA, 0xB, len(sprite))
 
         self.assert_data_register_value(0xF, 0)
 
@@ -591,9 +591,64 @@ class CpuOpcodesTestCase(unittest.TestCase):
             self.assertEqual(start_screen_row, expected_row, f'Second part of row {i} did not match; {bin(start_screen_row)} != {bin(expected_row)}')
 
     def test_opcode_DXYN_should_write_to_top_of_screen_when_starting_at_bottom(self):
-        # TODO test vertical warp
-        pass
+        sprite_addr = 0x400
+        self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, sprite_addr)
 
+        sprite = [
+            0b11110000,
+            0b10010000,
+            0b11110000,
+            0b11110000,
+            0b10010000,
+            0b11110000,
+        ]
+
+        for i in range(len(sprite)):
+            addr = sprite_addr + i
+            self.memory.write_8bit(addr, sprite[i])
+
+        x = 0x00
+        y = 0x1D # will splite the split in half
+        self.cpu.write_V(0xA, x)
+        self.cpu.write_V(0xB, y)
+
+        self.cpu.opcode_DXYK(0xA, 0xB, len(sprite))
+
+        self.assert_data_register_value(0xF, 0)
+
+        expected_addresses = [0xF00, 0xF08, 0xF10, 0xFE8, 0xFF0, 0xFF8]
+
+        for entry in zip(expected_addresses, range(len(sprite))):
+            expected_addr, i = entry
+            screen_row = self.memory.read_8bit(expected_addr)
+            self.assertEqual(screen_row, sprite[i], f'First part of row {i} did not match; {bin(screen_row)} != {bin(sprite[i])}')
+
+    def test_opcode_DXYN_should_all_edges_when_starting_at_last_pixel(self):
+        sprite_addr = 0x400
+        self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, sprite_addr)
+
+        sprite = [
+            0b11000000,
+            0b11000000,
+        ]
+
+        for i in range(len(sprite)):
+            addr = sprite_addr + i
+            self.memory.write_8bit(addr, sprite[i])
+
+        self.cpu.write_V(0xA, 0x3F)
+        self.cpu.write_V(0xB, 0x1F)
+
+        self.cpu.opcode_DXYK(0xA, 0xB, len(sprite))
+
+        self.assert_data_register_value(0xF, 0)
+
+        expected_addresses = [0xF00, 0xF07, 0xFF8, 0xFFF]
+        expected_values = [0b10000000, 0b1, 0b10000000, 0b1]
+
+        for expected_addr,expected_row in zip(expected_addresses, expected_values):
+            screen_row = self.memory.read_8bit(expected_addr)
+            self.assertEqual(screen_row, expected_row, f'Row at {hex(expected_addr)} did not match: {bin(screen_row)} != {bin(expected_row)}')
 
     def test_opcode_EX9E_should_skip_next_instruction_if_given_key_was_pressed(self):
         self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, 0x200)

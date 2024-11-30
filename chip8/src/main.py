@@ -14,17 +14,30 @@ def main():
     cpu = Cpu(memory, display, keyboard)
 
     # test program
-    memory.write_16bit(0x200, 0xA210)
-    memory.write_16bit(0x202, 0x613C)
-    memory.write_16bit(0x204, 0x6200)
-    memory.write_16bit(0x206, 0xD125)
-    memory.write_16bit(0x208, 0x613F)
-    memory.write_16bit(0x20A, 0x6205)
-    memory.write_16bit(0x20C, 0xD125)
-    memory.write_16bit(0x20E, 0x120E)
-    memory.write_16bit(0x210, 0xFF99)
-    memory.write_16bit(0x212, 0xFF99)
-    memory.write_16bit(0x214, 0xFF00)
+    memory.write_16bit(0x200, 0xA21C)
+
+    memory.write_16bit(0x202, 0x613F)
+    memory.write_16bit(0x204, 0x621F)
+    memory.write_16bit(0x206, 0xD122)
+    memory.write_16bit(0x208, 0x1208)
+
+    # memory.write_16bit(0x202, 0x613C)
+    # memory.write_16bit(0x204, 0x621E)
+    # memory.write_16bit(0x206, 0xD125)
+    # memory.write_16bit(0x208, 0x1208)
+
+    # memory.write_16bit(0x208, 0x613F)
+    # memory.write_16bit(0x20A, 0x6205)
+    # memory.write_16bit(0x20C, 0xD125)
+    # memory.write_16bit(0x20E, 0x6138)
+    # memory.write_16bit(0x210, 0x621D)
+    # memory.write_16bit(0x212, 0xD125)
+
+    memory.write_16bit(0x214, 0x1214)
+    memory.write_16bit(0x216, 0xFF99)
+    memory.write_16bit(0x218, 0xFF99)
+    memory.write_16bit(0x21A, 0xFF00)
+    memory.write_16bit(0x21C, 0xC0C0)
 
     cpu.start()
 
