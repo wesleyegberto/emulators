@@ -178,8 +178,8 @@ V B N M
     * [ ] Connect to main loop
 * [ ] Screen
     * [x] Implement display
-    * [ ] Implement rendering with Pygame
-    * [ ] Connect to main loop
+    * [x] Implement rendering with Pygame
+    * [x] Connect to main loop
 * [ ] Sound
 * [ ] Rom reader
 * [ ] Implement main loop
