@@ -30,7 +30,7 @@ class Memory:
             0xF0, 0x10, 0x20, 0x40, 0x40, # 0x23 => 7
             0xF0, 0x90, 0xF0, 0x90, 0xF0, # 0x28 => 8
             0xF0, 0x90, 0xF0, 0x10, 0xF0, # 0x2D => 9
-            0xF0, 0x80, 0x80, 0x80, 0xF0, # 0x32 => A
+            0xF0, 0x90, 0xF0, 0x90, 0x90, # 0x32 => A
             0xE0, 0x90, 0xE0, 0x90, 0xE0, # 0x37 => B
             0xF0, 0x80, 0x80, 0x80, 0xF0, # 0x3C => C
             0xE0, 0x90, 0x90, 0x90, 0xE0, # 0x41 => D
@@ -40,6 +40,7 @@ class Memory:
 
 
     def write_8bit(self, address, value):
+        # print(f'\tWriting {hex(value)} at address {hex(address)}')
         """ Store a 8-bit value at given address. """
         self.memory[address] = value & 0xFF
 
@@ -53,6 +54,7 @@ class Memory:
         self.memory[address] = (value >> 8) & 0xFF
         address = address + 1
         self.memory[address] = value & 0xFF
+        # print(f'Memory {hex(self.memory[address - 1])} {hex(self.memory[address])}')
 
     def read_16bit(self, address):
         """ Read a 16-bit value from two 8-bit cells starting at given address. """

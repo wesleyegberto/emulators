@@ -1,6 +1,5 @@
 import unittest
 import sys
-from pathlib import Path
 
 sys.path.append('src')
 
@@ -53,7 +52,7 @@ class MemoryInitializationTestCase(unittest.TestCase):
 
         # font digit A
         char_values = self.memory.read_range(0x32, 5)
-        self.assertListEqual(char_values, [0xF0, 0x80, 0x80, 0x80, 0xF0])
+        self.assertListEqual(char_values, [0xF0, 0x90, 0xF0, 0x90, 0x90])
 
         # font digit B
         char_values = self.memory.read_range(0x37, 5)
