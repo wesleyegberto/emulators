@@ -151,6 +151,11 @@ F G H J
 V B N M
 ```
 
+## Sound
+
+Chip8 uses a timer for sound to decide when it needs to make sound.
+Everytime the ST register is non-zero the Chip8 buzz will sound. The sound has only one tone.
+
 ## Notes about COSMIC VIP implementation
 
 * Instructions `8XY6` and `8XYE` use `VY`, see [here](https://github.com/Chromatophore/HP48-Superchip#8xy6--8xye-aka-x--y-x--y).
@@ -163,8 +168,8 @@ V B N M
     * [x] Handle `V0` to `VF`
     * [x] Handle `PC`
     * [x] Handle `I`
-    * [ ] Handle `DT`
-    * [ ] Handle `ST`
+    * [x] Handle `DT`
+    * [x] Handle `ST`
     * [x] Implement instruction decode
     * [x] Implement cycle
     * [x] Connect to main loop
@@ -180,7 +185,7 @@ V B N M
     * [x] Implement display
     * [x] Implement rendering with Pygame
     * [x] Connect to main loop
-* [ ] Sound
+* [x] Sound
 * [ ] Rom reader
 * [ ] Implement main loop
 
