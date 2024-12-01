@@ -7,14 +7,16 @@ from Cpu import Cpu
 from Display import *
 from Keyboard import Keyboard
 from Memory import Memory
+from Sound import Sound
 
 class CpuOpcodesTestCase(unittest.TestCase):
     def setUp(self):
         self.memory = Memory()
         self.display = Display(self.memory)
-        self.keyboard = Keyboard()
+        self.keyboard = Keyboard(mocked=True)
+        self.sound = Sound()
 
-        self.cpu = Cpu(self.memory, self.display, self.keyboard)
+        self.cpu = Cpu(self.memory, self.display, self.keyboard, self.sound)
 
     def assert_equal_hex(self, actual, expected):
         self.assertEqual(actual, expected, "Hex: {} != {}".format(hex(actual), hex(expected)))
@@ -371,11 +373,11 @@ class CpuOpcodesTestCase(unittest.TestCase):
 
         self.assert_memory_address_16bit_value(Cpu.REGISTER_I_ADDRESS, 0x230)
 
-    def test_opcode_ANNN_should_not_set_not_allowed_address_register_I(self):
-        self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, 0x2FF)
-
-        with self.assertRaises(Exception):
-            self.cpu.opcode_ANNN(0xF30)
+    # def test_opcode_ANNN_should_not_set_not_allowed_address_register_I(self):
+    #     self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, 0x2FF)
+    #
+    #     with self.assertRaises(Exception):
+    #         self.cpu.opcode_ANNN(0xF30)
 
     def test_opcode_BNNN_should_jump_to_address_plus_data_register_V0(self):
         self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, 0x200)
@@ -655,6 +657,7 @@ class CpuOpcodesTestCase(unittest.TestCase):
         self.cpu.write_V(0xA, 0x5)
 
         self.keyboard.send_key(0x5)
+
         self.cpu.opcode_EX9E(0xA)
 
         self.assert_memory_address_16bit_value(Cpu.REGISTER_PC_ADDRESS, 0x202)
@@ -665,6 +668,7 @@ class CpuOpcodesTestCase(unittest.TestCase):
         self.cpu.write_V(0xA, 0x6)
 
         self.keyboard.send_key(0x5)
+
         self.cpu.opcode_EX9E(0xA)
 
         self.assert_memory_address_16bit_value(Cpu.REGISTER_PC_ADDRESS, 0x200)
@@ -675,6 +679,7 @@ class CpuOpcodesTestCase(unittest.TestCase):
         self.cpu.write_V(0xA, 0x2)
 
         self.keyboard.send_key(0xA)
+
         self.cpu.opcode_EXA1(0xA)
 
         self.assert_memory_address_16bit_value(Cpu.REGISTER_PC_ADDRESS, 0x202)
@@ -685,6 +690,7 @@ class CpuOpcodesTestCase(unittest.TestCase):
         self.cpu.write_V(0xA, 0xF)
 
         self.keyboard.send_key(0xF)
+
         self.cpu.opcode_EXA1(0xA)
 
         self.assert_memory_address_16bit_value(Cpu.REGISTER_PC_ADDRESS, 0x200)

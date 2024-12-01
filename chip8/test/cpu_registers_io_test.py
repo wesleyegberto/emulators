@@ -7,14 +7,16 @@ from Cpu import Cpu
 from Display import Display
 from Keyboard import Keyboard
 from Memory import Memory
+from Sound import Sound
 
 class CpuRegistersTestCase(unittest.TestCase):
     def setUp(self):
         self.memory = Memory()
         self.display = Display(self.memory)
-        self.keyboard = Keyboard()
+        self.keyboard = Keyboard(mocked=True)
+        self.sound = Sound()
 
-        self.cpu = Cpu(self.memory, self.display, self.keyboard)
+        self.cpu = Cpu(self.memory, self.display, self.keyboard, self.sound)
 
     def test_allowed_memory_access_region(self):
         self.cpu.validate_memory_access_address(0x200)

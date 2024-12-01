@@ -7,14 +7,16 @@ from Cpu import Cpu
 from Display import Display
 from Keyboard import Keyboard
 from Memory import Memory
+from Sound import Sound
 
 class CpuExecutionTestCase(unittest.TestCase):
     def setUp(self):
         self.memory = Memory()
         self.display = Display(self.memory)
-        self.keyboard = Keyboard()
+        self.keyboard = Keyboard(mocked=True)
+        self.sound = Sound()
 
-        self.cpu = Cpu(self.memory, self.display, self.keyboard)
+        self.cpu = Cpu(self.memory, self.display, self.keyboard, self.sound)
 
     def assert_equal_hex(self, actual, expected):
         self.assertEqual(actual, expected, "Hex: {} != {}".format(hex(actual), hex(expected)))

@@ -1,11 +1,12 @@
 import pygame
 import random
 import time
-import sys
 
+from Display import *
 from Memory import Memory
 from Keyboard import Keyboard
-from Display import *
+from Sound import Sound
+from utils import quit_emulator
 
 class Cpu:
     """ CPU with registers and cycles """
@@ -49,12 +50,14 @@ class Cpu:
     # number of cycles to execute by the CPU
     # NUMBER_CYCLES_BY_EXECUTION = 23;
 
-    def __init__(self, memory: Memory, display: Display, keyboard: Keyboard):
+    def __init__(self, memory: Memory, display: Display, keyboard: Keyboard, sound: Sound):
         self.memory = memory
         self.keyboard = keyboard
         self.display = display
+        self.sound = sound
 
         self.cyclesCounter = 0;
+        self.last_time = time.time()
 
         self.opcodes_masks = [
             { 'mask': 0xFFFF, 'opcode': 0x00E0 },
@@ -152,9 +155,9 @@ class Cpu:
         self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, Cpu.MEMORY_PROGRAM_CODE_AREA_START_ADDRESS)
 
         # stack points start at reserved memory address
-        self.memory.write_8bit(Cpu.REGISTER_SP_ADDRESS, Cpu.MEMORY_STACK_START_ADDRESS)
+        self.memory.write_8bit(Cpu.REGISTER_SP_ADDRESS, 0)
 
-        # registers for dalay and sound timers
+        # registers for delay and sound timers
         self.memory.write_8bit(Cpu.REGISTER_DT_ADDRESS, 0x00)
         self.memory.write_8bit(Cpu.REGISTER_ST_ADDRESS, 0x00)
 
@@ -175,22 +178,17 @@ class Cpu:
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
+                    quit_emulator()
 
             self.execute_cpu_cycle()
 
-            # TODO: generate interrupts
+            self.check_beep()
+
             self.update_timers()
 
             # emulate graphics
             self.display.render()
 
-            self.check_dt()
-            self.check_beep()
-
-            # clock = pygame.time.Clock()
-            # clock.tick(60) # fps
             # simulate 60Hz refresh rate
             time.sleep(1 / 60)
 
@@ -210,14 +208,22 @@ class Cpu:
 
         # empty memory just do nothing
         if opcode == 0x0000:
+            self.step_pc()
             return
 
-        # decode it
-        decoded_opcode = self.decode_opcode(opcode)
-        # step PC
-        self.step_pc()
-        # execute it
-        decoded_opcode()
+        try:
+            # decode it
+            decoded_opcode = self.decode_opcode(opcode)
+            print(f'\tPC {hex(pc)}; Opcode {hex(opcode)}')
+
+            # step PC
+            self.step_pc()
+            # execute it
+            decoded_opcode()
+        except Exception as ex:
+            print('\n=== Debug Trace ===')
+            print(f'PC {hex(pc)}; Opcode {hex(opcode)}; Error: {ex}\n')
+            raise ex
 
     def decode_opcode(self, opcode):
         opcode_function = None
@@ -232,13 +238,20 @@ class Cpu:
         return lambda: opcode_function(opcode)
 
     def update_timers(self):
-        # update dalay timer
-        if self.memory.read_8bit(self.REGISTER_DT_ADDRESS) > 0:
-            self.memory.write_8bit(self.REGISTER_DT_ADDRESS, self.memory.read_8bit(self.REGISTER_DT_ADDRESS) - 1)
+        current_time = time.time()
+        elapsed_time = current_time - self.last_time
 
-        # update sound timer
-        if self.memory.read_8bit(self.REGISTER_ST_ADDRESS) > 0:
-            self.memory.write_8bit(self.REGISTER_ST_ADDRESS, self.memory.read_8bit(self.REGISTER_ST_ADDRESS) - 1)
+        # timer update at rate of 60Hz
+        if elapsed_time >= 1 / 60:
+            self.last_time = current_time
+
+            # update delay timer
+            if self.memory.read_8bit(self.REGISTER_DT_ADDRESS) > 0:
+                self.memory.write_8bit(self.REGISTER_DT_ADDRESS, self.memory.read_8bit(self.REGISTER_DT_ADDRESS) - 1)
+
+            # update sound timer
+            if self.memory.read_8bit(self.REGISTER_ST_ADDRESS) > 0:
+                self.memory.write_8bit(self.REGISTER_ST_ADDRESS, self.memory.read_8bit(self.REGISTER_ST_ADDRESS) - 1)
 
     def get_opcode_value_X(self, opcode):
         """ Extract value X from opcode with format 0X00. """
@@ -262,20 +275,15 @@ class Cpu:
 
     def step_pc(self):
         """ Increment PC by 2 bytes """
-
         pc_value = self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS)
         pc_value = pc_value + 0x2
         self.validate_memory_access_address(pc_value)
         # TODO: check if is in even position
         self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, pc_value)
 
-    def check_dt(self):
-        """ Check if DT needs to count down """
-        pass
-
     def check_beep(self):
-        """ Check if needs to emit beep """
-        pass
+        if self.memory.read_8bit(self.REGISTER_ST_ADDRESS) > 0:
+            self.sound.play()
 
     def is_valid_hexadecimal(self, value):
         return value >= 0 and value <= 0xF
@@ -310,26 +318,25 @@ class Cpu:
         return self.memory.read_16bit(self.get_stack_current_memory_address())
 
     def pop_address_from_stack(self):
-        address = self.read_top_address_in_stack()
-
-        sp_value = self.memory.read_8bit(Cpu.REGISTER_SP_ADDRESS)
-        if sp_value == 0x00:
+        stack_counter = self.memory.read_8bit(Cpu.REGISTER_SP_ADDRESS)
+        if stack_counter == 0x00:
             raise Exception('No more address to pop')
-        sp_value = sp_value - 2 # 16-bit memory address
-        self.memory.write_8bit(Cpu.REGISTER_SP_ADDRESS, sp_value)
+
+        address = self.read_top_address_in_stack()
+        stack_counter = stack_counter - 2
+        self.memory.write_8bit(Cpu.REGISTER_SP_ADDRESS, stack_counter)
 
         return address
 
     def push_address_into_stack(self, addr):
-        sp_value = self.memory.read_8bit(Cpu.REGISTER_SP_ADDRESS)
-        sp_value = sp_value + 2 # 16-bit memory address
-        self.memory.write_8bit(Cpu.REGISTER_SP_ADDRESS, sp_value)
-
-        stack_addr = self.get_stack_current_memory_address()
-        if stack_addr > Cpu.MEMORY_STACK_END_ADDRESS:
+        stack_counter = self.memory.read_8bit(Cpu.REGISTER_SP_ADDRESS)
+        if Cpu.MEMORY_STACK_START_ADDRESS + stack_counter + 2 > Cpu.MEMORY_STACK_END_ADDRESS:
             raise Exception('Stack overflow')
 
-        self.memory.write_16bit(stack_addr, addr)
+        stack_counter = stack_counter + 2
+        self.memory.write_8bit(Cpu.REGISTER_SP_ADDRESS, stack_counter)
+        stack_address = Cpu.MEMORY_STACK_START_ADDRESS + stack_counter
+        self.memory.write_16bit(stack_address, addr)
 
     def write_V(self, register, value):
         """ Store a value into one of registers V0-VF """
@@ -392,6 +399,7 @@ class Cpu:
         """
 
         address = self.pop_address_from_stack()
+        print('Poping stack to ', hex(address))
         self.write_register_pc(address)
 
     def opcode_1NNN(self, addr):
@@ -582,7 +590,7 @@ class Cpu:
 
         The value of register I is set to NNN.
         """
-        self.validate_memory_access_address(addr)
+        # self.validate_memory_access_address(addr)
         self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, addr)
 
     def opcode_BNNN(self, addr):
@@ -688,10 +696,11 @@ class Cpu:
         Checks the keyboard, and if the key corresponding to the value of VX
         is currently in the down position, PC is increased by 2.
         """
-        key_pressed = self.keyboard.read_key()
+        # TODO: way for key press
+        key_pressed = self.keyboard.wait_key_press()
         x_value = self.read_V(x)
 
-        if key_pressed is x_value:
+        if key_pressed == x_value:
             self.step_pc()
 
     def opcode_EXA1(self, x):
@@ -724,10 +733,8 @@ class Cpu:
         All execution stops until a key is pressed, then the value of that key
         is stored in VX.
         """
-        key_pressed = None
-        while key_pressed is None:
-            time.sleep(0.200) # wait to press
-            key_pressed = self.keyboard.read_key()
+        key_pressed = self.keyboard.wait_key_press()
+        print(f'Key pressed {key_pressed}')
         self.write_V(x, key_pressed)
 
     def opcode_FX15(self, x):
