@@ -1,4 +1,5 @@
 import pygame
+from utils import quit_emulator
 
 PYGAME_EVENT_MAPPING = {
     pygame.K_4: 0x1, pygame.K_5: 0x2, pygame.K_6: 0x3, pygame.K_7: 0xC,
@@ -24,8 +25,10 @@ class Keyboard:
     F G H J
     V B N M
     """
-    def __init__(self):
+
+    def __init__(self, mocked = False):
         self.last_key_pressed = None
+        self.mocked = mocked
 
     def read_key(self):
         return self.last_key_pressed
@@ -33,9 +36,20 @@ class Keyboard:
     def send_key(self, key_code):
         self.last_key_pressed = key_code & 0xF
 
+    def wait_key_press(self):
+        waiting = True and not self.mocked
+        while waiting:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:  # Allow closing the window
+                    quit_emulator()
+                if event.type == pygame.KEYDOWN:  # Key press detected
+                    waiting = not self.handle_pygame_event(event)
+        return self.read_key()
+
     def handle_pygame_event(self, event) -> bool:
         if event.type != pygame.KEYDOWN:
             return False
+        # print(f"Key pressed: {pygame.key.name(event.key)}")
 
         if event.key not in PYGAME_EVENT_MAPPING:
             return False;
