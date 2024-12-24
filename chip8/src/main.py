@@ -15,26 +15,34 @@ def main():
 
     cpu = Cpu(memory, display, keyboard, sound)
 
-    # print fonts
-    # addr = Cpu.MEMORY_PROGRAM_CODE_AREA_START_ADDRESS
-    # memory.write_16bit(addr, 0xA000 + (5 * 0))
-    # addr += 2
-    # memory.write_16bit(addr, 0x6100)
-    # addr += 2
-    # memory.write_16bit(addr, 0x6200)
-    # addr += 2
-    # memory.write_16bit(addr, 0xD125)
-    # addr += 2
-    # memory.write_16bit(addr, 0x1000 + addr)
+    load_print_font_program(memory)
+    # load_screen_warp_program(memory)
+    # load_delay_timer_program(memory)
 
-    # load_rom(memory)
-
-    # test program
-    load_warp_test(memory)
+    # load_rom_file_into_memory('roms/delay_timer_test.ch8', memory)
 
     cpu.start()
 
-def load_warp_test(memory: Memory):
+def load_print_font_program(memory: Memory):
+    addr = Cpu.MEMORY_PROGRAM_CODE_AREA_START_ADDRESS
+    memory.write_16bit(addr, 0xA000 + (5 * 9))
+    addr += 2
+    memory.write_16bit(addr, 0x6100)
+    addr += 2
+    memory.write_16bit(addr, 0x6200)
+    addr += 2
+    memory.write_16bit(addr, 0xD125)
+    addr += 2
+    memory.write_16bit(addr, 0x6104)
+    addr += 2
+    memory.write_16bit(addr, 0x6200)
+    addr += 2
+    memory.write_16bit(addr, 0xD125)
+    addr += 2
+    memory.write_16bit(addr, 0x1000 + addr)
+
+
+def load_screen_warp_program(memory: Memory):
     memory.write_16bit(0x200, 0xA222)
 
     # dot warped in the 4 corners
@@ -66,7 +74,39 @@ def load_warp_test(memory: Memory):
     memory.write_16bit(0x226, 0xFF00)
     memory.write_16bit(0x228, 0xC0C0)
 
-def load_rom(memory: Memory):
+def read_rom_file(file) -> str:
+    with open(file, 'rb') as f:
+        return f.read().hex()
+
+def load_rom_file_into_memory(filename: str, memory: Memory):
+    rom_data = read_rom_file(filename)
+
+    rom_data_lines = ''
+
+    i = 0
+    for l in rom_data:
+        i += 1
+        rom_data_lines += l
+        if i >= 4:
+            rom_data_lines += '\n'
+            i = 0
+
+    load_rom_into_memory(rom_data_lines, memory)
+
+def load_rom_into_memory(rom_data: str, memory: Memory):
+    print('\n=== Reading Rom ===')
+    addr = Cpu.MEMORY_PROGRAM_CODE_AREA_START_ADDRESS
+    for line in rom_data.split('\n'):
+        if len(line.strip()) == 0:
+            continue
+        data = int(line.strip(), 16)
+        print(f'\t{hex(addr)} === {hex(data)}')
+
+        memory.write_16bit(addr, data)
+        addr += 2
+    print('=== Finished ===\n')
+
+def load_delay_timer_program(memory: Memory):
     # Program to test timer delay (2 to increase, 8 to decrease, 5 to start counting down)
     rom_data = '''6400
     221E
@@ -98,15 +138,7 @@ def load_rom(memory: Memory):
     D345
     00EE'''
 
-    print('\n=== Reading Rom ===')
-    addr = Cpu.MEMORY_PROGRAM_CODE_AREA_START_ADDRESS
-    for line in rom_data.split('\n'):
-        data = int(line.strip(), 16)
-        print(f'\t{hex(addr)} === {hex(data)}')
-
-        memory.write_16bit(addr, data)
-        addr += 2
-    print('=== Finished ===\n')
+    load_rom_into_memory(rom_data, memory)
 
 if __name__ == "__main__":
     main()
