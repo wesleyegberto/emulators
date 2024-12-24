@@ -25,7 +25,7 @@ class KeyboardTest(unittest.TestCase):
         self.assertFalse(handled)
 
     def test_should_ignore_unmapped_key(self):
-        event = Event(pygame.KEYDOWN, key=pygame.K_a)
+        event = Event(pygame.KEYDOWN, key=pygame.K_p)
         handled = self.keyboard.handle_pygame_event(event)
         self.assertFalse(handled)
 
