@@ -214,7 +214,7 @@ class Cpu:
         try:
             # decode it
             decoded_opcode = self.decode_opcode(opcode)
-            print(f'\tPC {hex(pc)}; Opcode {hex(opcode)}')
+            # print(f'\tPC {hex(pc)}; Opcode {hex(opcode)}')
 
             # step PC
             self.step_pc()
@@ -399,7 +399,7 @@ class Cpu:
         """
 
         address = self.pop_address_from_stack()
-        print('Poping stack to ', hex(address))
+        # print('Poping stack to ', hex(address))
         self.write_register_pc(address)
 
     def opcode_1NNN(self, addr):
@@ -547,7 +547,7 @@ class Cpu:
         """
         y_value = self.read_V(y)
         self.write_V(x, y_value >> 1)
-        self.write_flag(y_value % 2)
+        self.write_flag(y_value & 0b1)
 
     def opcode_8XY7(self, x, y):
         """ Set VX = VY - VX, set VF = NOT borrow.
@@ -574,7 +574,7 @@ class Cpu:
         y_value = self.read_V(y)
         result = y_value << 1
         self.write_V(x, result)
-        self.write_flag(result > 0xFF)
+        self.write_flag(y_value >> 7)
 
     def opcode_9XY0(self, x, y):
         """ Skip next instruction if VX != VY.

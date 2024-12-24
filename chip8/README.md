@@ -37,6 +37,8 @@ The crytal clock operates at 1.76 MHz.
 
 Chip-8 has a lot of registers, detailed [here](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#2.2):
 
+The memory has the layout with big-endian.
+
 * 16 general purpose 8-bit registers, referred to as `VX` where `X` is a hexadecimal digit (0 through F);
   * `VF` should not be used by any program, as it is also used as a flag by some instructions.
 * 16-bit register called `I` used to store memory addresses in some instructions, so only the lowest (rightmost) 12 bits are usually used;
@@ -207,4 +209,13 @@ Everytime the ST register is non-zero the Chip8 buzz will sound. The sound has o
 * [DREAM 6800 Manual](https://archive.org/stream/EA1979/EA%201979-05%20May#page/n85/mode/2up)
 * [Emutalk](https://www.emutalk.net/threads/chip-8.19894/)
 * [Awesome Chip8 repo](https://github.com/tobiasvl/awesome-chip-8)
+* Chip8 programs:
+  * [Chip8 Online Emulator](https://chip8emu.com/)
+    * this emulator has an [incorrect implementation of opcodes 8XY6 and 8XYE](https://github.com/mattmikolay/chip-8/wiki/CHIP%E2%80%908-Instruction-Set#notes)
+    * 8XY6 is validating `Vx = Vx >> 1` instead of using `Vx = Vy >> 1`
+    * 8XYE is validating `Vx = Vx << 1` instead of using `Vx = Vy << 1`
+  * [Chip8 Test Rom](https://github.com/corax89/chip8-test-rom?tab=readme-ov-file)
+  * [Chip8 Opcdes Test Rom](https://github.com/daniel5151/AC8E/blob/master/roms/bc_test.txt)
+    * the validation is using [incorrect implementation of opcodes 8XY6 and 8XYE](https://github.com/mattmikolay/chip-8/wiki/CHIP%E2%80%908-Instruction-Set#notes)
+    * we can change the behavior of these opcodes to tests the others
 
