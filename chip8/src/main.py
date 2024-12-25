@@ -1,3 +1,5 @@
+import sys
+
 from Cpu import Cpu
 from Display import Display
 from Keyboard import Keyboard
@@ -6,7 +8,7 @@ from Sound import Sound
 
 print("Chip8 Emulator")
 
-def main():
+def main(args):
     memory = Memory()
     keyboard = Keyboard()
     display = Display(memory)
@@ -15,11 +17,17 @@ def main():
 
     cpu = Cpu(memory, display, keyboard, sound)
 
-    load_print_font_program(memory)
-    # load_screen_warp_program(memory)
-    # load_delay_timer_program(memory)
+    if len(args) > 1:
+        filename = args[1]
+        if len(filename) == 0:
+            raise Exception('Invalid rom file')
 
-    # load_rom_file_into_memory('roms/delay_timer_test.ch8', memory)
+        load_rom_file_into_memory(f'roms/{filename}', memory)
+    else:
+        load_print_font_program(memory)
+        # load_screen_warp_program(memory)
+        # load_delay_timer_program(memory)
+        # load_rom_file_into_memory('roms/test_opcode.ch8', memory)
 
     cpu.start()
 
@@ -33,7 +41,9 @@ def load_print_font_program(memory: Memory):
     addr += 2
     memory.write_16bit(addr, 0xD125)
     addr += 2
-    memory.write_16bit(addr, 0x6104)
+    memory.write_16bit(addr, 0xA000 + (5 * 1))
+    addr += 2
+    memory.write_16bit(addr, 0x6108)
     addr += 2
     memory.write_16bit(addr, 0x6200)
     addr += 2
@@ -141,5 +151,5 @@ def load_delay_timer_program(memory: Memory):
     load_rom_into_memory(rom_data, memory)
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)
 
