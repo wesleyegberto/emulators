@@ -37,13 +37,14 @@ class Keyboard:
         self.last_key_pressed = key_code & 0xF
 
     def wait_key_press(self):
-        waiting = True and not self.mocked
-        while waiting:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:  # Allow closing the window
-                    quit_emulator()
-                if event.type == pygame.KEYDOWN:  # Key press detected
-                    waiting = not self.handle_pygame_event(event)
+        if self.last_key_pressed is None:
+            waiting = True and not self.mocked
+            while waiting:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:  # Allow closing the window
+                        quit_emulator()
+                    if event.type == pygame.KEYDOWN:  # Key press detected
+                        waiting = not self.handle_pygame_event(event)
         return self.read_key()
 
     def handle_pygame_event(self, event) -> bool:

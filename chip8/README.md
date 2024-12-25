@@ -147,10 +147,10 @@ A 0 B F
 
 Keyboard controller layout:
 
-4 5 6 7
-R T Y U
-F G H J
-V B N M
+1 2 3 4
+Q W E R
+A S D F
+Z X C V
 ```
 
 ## Sound
