@@ -43,7 +43,7 @@ def load_print_font_program(memory: Memory):
     addr += 2
     memory.write_16bit(addr, 0xA000 + (5 * 1))
     addr += 2
-    memory.write_16bit(addr, 0x6108)
+    memory.write_16bit(addr, 0x6104)
     addr += 2
     memory.write_16bit(addr, 0x6200)
     addr += 2
