@@ -179,10 +179,10 @@ class Cpu:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     quit_emulator()
+                if event.type == pygame.KEYDOWN:
+                    self.keyboard.handle_pygame_event(event)
 
             self.execute_cpu_cycle()
-
-            self.check_beep()
 
             self.update_timers()
 
@@ -242,7 +242,7 @@ class Cpu:
         elapsed_time = current_time - self.last_time
 
         # timer update at rate of 60Hz
-        if elapsed_time >= 1 / 60:
+        if elapsed_time >= (1 / 60):
             self.last_time = current_time
 
             # update delay timer
@@ -252,6 +252,10 @@ class Cpu:
             # update sound timer
             if self.memory.read_8bit(self.REGISTER_ST_ADDRESS) > 0:
                 self.memory.write_8bit(self.REGISTER_ST_ADDRESS, self.memory.read_8bit(self.REGISTER_ST_ADDRESS) - 1)
+
+                if self.memory.read_8bit(self.REGISTER_ST_ADDRESS) == 0:
+                    self.sound.play()
+
 
     def get_opcode_value_X(self, opcode):
         """ Extract value X from opcode with format 0X00. """
@@ -280,10 +284,6 @@ class Cpu:
         self.validate_memory_access_address(pc_value)
         # TODO: check if is in even position
         self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, pc_value)
-
-    def check_beep(self):
-        if self.memory.read_8bit(self.REGISTER_ST_ADDRESS) > 0:
-            self.sound.play()
 
     def is_valid_hexadecimal(self, value):
         return value >= 0 and value <= 0xF
