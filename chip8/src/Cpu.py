@@ -677,7 +677,7 @@ class Cpu:
                     collision_flag = sprite_row & curr_screen_row
 
                 # XOEed the sprite row into the screen, turning it off if there is a collision
-                draw_result = (sprite_row ^ curr_screen_row) & sprite_row
+                draw_result = sprite_row ^ curr_screen_row
 
                 # print(f'Writing {hex(screen_addr)} value {bin(draw_result)}')
                 self.memory.write_8bit(screen_addr, draw_result)
