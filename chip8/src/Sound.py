@@ -2,10 +2,12 @@ import numpy as np
 import pygame
 
 class Sound:
-    def __init__(self):
+    def __init__(self, mocked=False):
         # initilize 16-bit mono sound
-        pygame.mixer.init(frequency=44100, size=-16, channels=1, buffer=512)
-        self.buzz = self.generate_beep()
+        self.mocked = mocked
+        if not mocked:
+            pygame.mixer.init(frequency=44100, size=-16, channels=1, buffer=512)
+            self.buzz = self.generate_beep()
 
     def generate_beep(self, frequency=440, duration=0.2, sample_rate=44100):
         t = np.linspace(0, duration, int(sample_rate * duration), False)
@@ -15,5 +17,8 @@ class Sound:
         return sound
 
     def play(self):
-        self.buzz.play()
+        if self.mocked:
+            print('Beeping')
+        else:
+            self.buzz.play()
 

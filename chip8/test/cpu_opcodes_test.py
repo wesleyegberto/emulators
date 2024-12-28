@@ -14,7 +14,7 @@ class CpuOpcodesTestCase(unittest.TestCase):
         self.memory = Memory()
         self.display = Display(self.memory)
         self.keyboard = Keyboard(mocked=True)
-        self.sound = Sound()
+        self.sound = Sound(mocked=True)
 
         self.cpu = Cpu(self.memory, self.display, self.keyboard, self.sound)
 
