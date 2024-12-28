@@ -6,6 +6,8 @@ It implements a COSMIC VIP with the original 36 instructions and with 4 KB of me
 
 This documentation was built, mostly, from [Cowgod's documentation](http://devernay.free.fr/hacks/chip8).
 
+![](img/chip8_emulator.png)
+
 ## What is Chip-8?
 
 From [Cowgod's website](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#1.0):
