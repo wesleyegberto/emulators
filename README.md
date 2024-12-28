@@ -4,5 +4,8 @@ My own emulators write in Python.
 
 ## Emulators
 
-* Chip8 (Doing)
-* NES (Todo)
+* [x] [Chip8](./chip8/)
+* [ ] [Atari](./atari/)
+* [ ] NES
+* [ ] SNES
+
