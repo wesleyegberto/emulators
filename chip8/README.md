@@ -164,7 +164,7 @@ Everytime the ST register is non-zero the Chip8 buzz will sound. The sound has o
 
 ## TODO
 
-* [ ] CPU
+* [x] CPU
     * [x] instructions
     * [x] Handle `SP`
     * [x] Handle `V0` to `VF`
@@ -175,21 +175,22 @@ Everytime the ST register is non-zero the Chip8 buzz will sound. The sound has o
     * [x] Implement instruction decode
     * [x] Implement cycle
     * [x] Connect to main loop
-* [ ] Memory
+* [x] Memory
     * [x] Memory: bultin fonts
     * [x] Memory: verify if needs to reserve memory for call stack and registers (`I`, `PC`, `SP`, `V0` to `VF`)
     * [x] Move logic to update register to `Cpu` class
-* [ ] Keyboard
+* [x] Keyboard
     * [x] Implement hexadecimal controller
     * [x] Implement Pygame keyboard input controller
-    * [ ] Connect to main loop
-* [ ] Screen
+    * [x] Connect to main loop
+* [x] Screen
     * [x] Implement display
     * [x] Implement rendering with Pygame
     * [x] Connect to main loop
 * [x] Sound
-* [ ] Rom reader
-* [ ] Implement main loop
+* [x] Rom reader
+* [x] Implement main loop
+* [ ] Debug interface (?)
 
 ## Links
 
