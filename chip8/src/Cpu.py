@@ -11,6 +11,9 @@ from utils import quit_emulator
 class Cpu:
     """ CPU with registers and cycles """
 
+    DELAY_SPEED = 60 #hz
+    CLOCK_SPEED = 60 #hz
+
     """ Instruction length: 2 bytes """
     OPCODE_LENGTH = 0x2
 
@@ -56,7 +59,8 @@ class Cpu:
         self.display = display
         self.sound = sound
 
-        self.cyclesCounter = 0;
+        self.clock = pygame.time.Clock()
+
         self.last_time = time.time()
 
         self.opcodes_masks = [
@@ -190,7 +194,8 @@ class Cpu:
             self.display.render()
 
             # simulate 60Hz refresh rate
-            time.sleep(1 / 60)
+            time.sleep(1 / Cpu.CLOCK_SPEED)
+            # self.clock.tick(Cpu.CLOCK_SPEED)
 
     def execute_cpu_cycle(self):
         """ CPU cycle execution.
@@ -242,7 +247,7 @@ class Cpu:
         elapsed_time = current_time - self.last_time
 
         # timer update at rate of 60Hz
-        if elapsed_time >= (1 / 60):
+        if elapsed_time >= (1 / Cpu.DELAY_SPEED):
             self.last_time = current_time
 
             # update delay timer
@@ -251,10 +256,9 @@ class Cpu:
 
             # update sound timer
             if self.memory.read_8bit(self.REGISTER_ST_ADDRESS) > 0:
-                self.memory.write_8bit(self.REGISTER_ST_ADDRESS, self.memory.read_8bit(self.REGISTER_ST_ADDRESS) - 1)
+                self.sound.play()
 
-                if self.memory.read_8bit(self.REGISTER_ST_ADDRESS) == 0:
-                    self.sound.play()
+                self.memory.write_8bit(self.REGISTER_ST_ADDRESS, self.memory.read_8bit(self.REGISTER_ST_ADDRESS) - 1)
 
 
     def get_opcode_value_X(self, opcode):
@@ -349,26 +353,6 @@ class Cpu:
     def read_V(self, register):
         """ Read a value from one of registers V0-VF """
         return self.memory.read_8bit(self.calculate_data_register_memory_address(register))
-
-    def read_font(self, value):
-        if not self.is_valid_hexadecimal(value):
-            raise Exception('Invalid font, please choose between hex 0x0 and 0xF')
-        # offset to skip the unwanted positions (hex * sprite length)
-        offset = value * 5
-        return self.memory.read_range(offset, 5)
-
-    def plot_char(self, value):
-        """ Plots the builtin font (0x0 to 0xF) """
-
-        char = self.read_font(value)
-        sprite = [self.bitfield(val) for val in char]
-
-    def bitfield(self, n):
-        bits = [int(digit) for digit in bin(n)[2:]]
-        if len(bits) < 8:
-            for i in range(8 - len(bits)):
-                bits.insert(0, 0)
-        return bits
 
     def write_register_pc(self, addr):
         """ Set register `PC` to the given address. """
@@ -697,7 +681,7 @@ class Cpu:
         is currently in the down position, PC is increased by 2.
         """
         # TODO: way for key press
-        key_pressed = self.keyboard.wait_key_press()
+        key_pressed = self.keyboard.read_key()
         x_value = self.read_V(x)
 
         if key_pressed == x_value:
@@ -717,6 +701,7 @@ class Cpu:
 
     def opcode_FX00(self, x):
         """ Set pitch = VX """
+
         raise Exception("Not implemented")
 
     def opcode_FX07(self, x):

@@ -1,5 +1,5 @@
 run:
-	python3 ./src/main.py
+	python3 ./src/main.py $(rom)
 
 env:
 	python3 -m venv .penv/
