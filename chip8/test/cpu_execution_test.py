@@ -72,13 +72,6 @@ class CpuExecutionTestCase(unittest.TestCase):
             opcode_function = self.cpu.decode_opcode(opcode_test)
             self.assertEqual(opcode_function(), hex(opcode))
 
-    def test_decode_opcode_should_reject_invalid_opcode(self):
-        invalid_opcodes = [0x01A0, 0x00E1, 0xF48C]
-
-        for opcode in invalid_opcodes:
-            with self.assertRaises(Exception):
-                self.cpu.decode_opcode(opcode)
-
     def test_get_opcode_value_X_should_extract_value(self):
         self.assert_equal_hex(self.cpu.get_opcode_value_X(0x0A00), 0xA)
         self.assert_equal_hex(self.cpu.get_opcode_value_X(0x8A27), 0xA)

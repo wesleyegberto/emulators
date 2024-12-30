@@ -54,19 +54,25 @@ The memory has the layout with big-endian.
 
 This [COSMIC VIP](https://github.com/Chromatophore/HP48-Superchip/blob/master/investigations/quirk_memlimit.md) implementation divides the memory as following:
 
-* 0x00 to 0x1FF (512 bytes): reserved to Chip8 implementation (here is empty, maybe I will put the actually code available [here](https://archive.org/details/bitsavers_rcacosmacCManual1978_6956559/page/n35/mode/2up)):
+
+* 512 bytes (0x000 a 0x1FF) são reservados para o interpretador Chip-8:
+  * 0x000 a 0x080: fonts internas
+  * 0x081 a 0x1FF: interpretador Chip-8 
+* 3.232 bytes (0x200 a 0xE9F) podem ser utilizados para dados do programa
+* 96 bytes (0xEA0 a 0xEFF) são reservados para stack e registradores:
+  * 48 bytes (0xEA0 a 0xECF) são para stack
+  * 32 bytes (0xED0 a 0xEEF) são para work area
+  * 16 bytes (0xEF0 to 0xEFF): são para os registradores de dados (de `V0` até `VF`)
+* 256 bytes (0xF00 a 0xFFF) são reservados para memória do display
+
+
+* 0x00 to 0x1FF (512 bytes): reserved to Chip8 interpreter
   * 0x000 to 0x050: builtin fonts for hexadecimal digits (0 to F) of 5 bytes long (8x5 pixels)
-* 0x200 to 0xE9F (3,232 bytes): memory to program code;
-* 0xEA0 to 0xEFF (96 bytes): memory reserved internal user:
-  * 0xEA0 to 0xEBF (32 bytes): stack;
-  * 0xED0 to 0xEEF (32 bytes): registers (`I`, `PC`, `SP`, `DT`, `ST`):
-    * 0xED0: register `PC`
-    * 0xED2: register `I`
-    * 0xED4: register `SP`
-    * 0xED5: register `DT`
-    * 0xED6: register `ST`
-    * 0xED9: random number
-    * Note: this address was defined by manual intepretention (see COSMAC VIP Instruction Manual p 15).
+  * 0x081 to 0x1FF: Chip8 implementation (here is empty, maybe I will put the actually code available [here](https://archive.org/details/bitsavers_rcacosmacCManual1978_6956559/page/n35/mode/2up)):
+* 0x200 to 0xE9F (3,232 bytes): memory to program code
+* 0xEA0 to 0xEFF (96 bytes): memory reserved internal user
+  * 0xEA0 to 0xECF (48 bytes): stack
+  * 0xED0 to 0xEEF (32 bytes): Chip-8 interpreter work area
   * 0xEF0 to 0xEFF (16 bytes): data registers (from `V0` to `VF`).
 * 0xF00 to 0xFFF (256 bytes): reserved to display refresh.
 
@@ -185,6 +191,7 @@ Everytime the ST register is non-zero the Chip8 buzz will sound. The sound has o
     * [x] Implement hexadecimal controller
     * [x] Implement Pygame keyboard input controller
     * [x] Connect to main loop
+    * [ ] Halt only CPU in opcode FX0A (DT and ST is also halting)
 * [x] Screen
     * [x] Implement display
     * [x] Implement rendering with Pygame
@@ -192,33 +199,37 @@ Everytime the ST register is non-zero the Chip8 buzz will sound. The sound has o
 * [x] Sound
 * [x] Rom reader
 * [x] Implement main loop
+* [ ] Implement separeted cycles for `DT` and `ST`
 * [ ] Debug interface (?)
 
 ## Links
 
-* [Wiki](https://en.wikipedia.org/wik/CHIP-8)
-* [Study of the techniques for emulation programming](http://www.codeslinger.co.uk/files/emu.pdf)
-* [Unified Chip8 Documentation (Best one)](https://github.com/trapexit/chip-8_documentation)
-* [Cowgod's Chip8 Technical Reference](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#0.0)
-* [Mastering Chip8](http://mattmik.com/files/chip8/mastering/chip8.html)
-* [Programming in Chip-8 - EIT ed Nov 1981](https://archive.org/stream/ETIA1981/ETI%201981-11%20November#page/n113/mode/2up))
+* [Wikipedia Chip-8](https://en.wikipedia.org/wiki/CHIP-8)
+* [Wikipedia RCA 1802](https://en.wikipedia.org/wiki/RCA_1802)
+* [Mastering Chip-8](http://mattmik.com/files/Chip-8/mastering/Chip-8.html)
+* [Cowgod's Chip-8 Technical Reference](http://devernay.free.fr/hacks/Chip-8/C8TECH10.HTM#0.0)
+* [Chip-8 Technical Reference](http://devernay.free.fr/hacks/Chip-8/C8TECH10.HTM#0.0)
+* [Unified Chip-8 Documentation](https://github.com/trapexit/chip-8_documentation)
 * [Doc with Interesting Comments](https://github.com/Chromatophore/HP48-Superchip)
-* [Chip8 Technical Reference](https://github.com/mattmikolay/chip-8/wiki/CHIP%E2%80%908-Technical-Reference)
-* [Emulating Chip8 System](http://www.codeslinger.co.uk/pages/projects/chip8.html)
-* [Chip8 Classic Manual](https://storage.googleapis.com/wzukusers/user-34724694/documents/5c83d6a5aec8eZ0cT194/CHIP-8%20Classic%20Manual%20Rev%201.3.pdf)
-* [Chip8 Emulator](http://vanbeveren.byethost13.com/stuff/CHIP8.pdf)
-* [Octo IDE - High level assembler for Chip8 VM](https://github.com/JohnEarnest/Octo)
-* [COSMAC VIP Instruction Manual](https://archive.org/details/bitsavers_rcacosmacCManual1978_6956559/page/n1/mode/2up)
-* [DREAM 6800 Manual](https://archive.org/stream/EA1979/EA%201979-05%20May#page/n85/mode/2up)
-* [Emutalk](https://www.emutalk.net/threads/chip-8.19894/)
 * [Awesome Chip8 repo](https://github.com/tobiasvl/awesome-chip-8)
-* Chip8 programs:
+* Manual e old magazines:
+  * [COSMAC VIP Instruction Manual](https://archive.org/details/bitsavers_rcacosmacCManual1978_6956559/page/n1/mode/2up)
+  * [DREAM 6800 Manual](https://archive.org/stream/EA1979/EA%201979-05%20May#page/n85/mode/2up)
+  * [Chip-8 Classic Manual](https://storage.googleapis.com/wzukusers/u$$ser-34724694/documents/5c83d6a5aec8eZ0cT194/CHIP-8%20Classic%20Manual%20Rev%201.3.pdf)
+  * [Programming in Chip-8 - EIT ed Nov 1981](https://archive.org/stream/ETIA1981/ETI%201981-11%20November#page/n113/mode/2up)
+* [Octo IDE - High level assembler for Chip-8 VM](https://github.com/JohnEarnest/Octo)
+* [Guide to Making Chip-8 Emulator](https://tobiasvl.github.io/blog/write-a-chip-8-emulator/)
+* [Chip-8 on the COSMAC VIP](https://www.laurencescotford.net/2020/07/25/chip-8-on-the-cosmac-vip-index/)
+  * [Drawing Sprites](https://www.laurencescotford.net/2020/07/19/chip-8-on-the-cosmac-vip-drawing-sprites/)
+  * [Keyboard Input](https://www.laurencescotford.net/2020/07/19/chip-8-on-the-cosmac-vip-keyboard-input/)
+* Chip-8 programs:
+  * [Chip 8 Test Suite](https://github.com/Timendus/chip8-test-suite/?tab=readme-ov-file)
+    * has test to validate the correct implementation of 8XY6 and 8XYE
   * [Chip8 Online Emulator](https://chip8emu.com/)
     * this emulator has an [incorrect implementation of opcodes 8XY6 and 8XYE](https://github.com/mattmikolay/chip-8/wiki/CHIP%E2%80%908-Instruction-Set#notes)
     * 8XY6 is validating `Vx = Vx >> 1` instead of using `Vx = Vy >> 1`
     * 8XYE is validating `Vx = Vx << 1` instead of using `Vx = Vy << 1`
   * [Chip8 Test Rom](https://github.com/corax89/chip8-test-rom?tab=readme-ov-file)
-  * [Chip8 Opcdes Test Rom](https://github.com/daniel5151/AC8E/blob/master/roms/bc_test.txt)
     * the validation is using [incorrect implementation of opcodes 8XY6 and 8XYE](https://github.com/mattmikolay/chip-8/wiki/CHIP%E2%80%908-Instruction-Set#notes)
     * we can change the behavior of these opcodes to tests the others
 

@@ -12,7 +12,7 @@ class Cpu:
     """ CPU with registers and cycles """
 
     DELAY_SPEED = 60 #hz
-    CLOCK_SPEED = 60 #hz
+    CLOCK_SPEED = 120 #hz
 
     """ Instruction length: 2 bytes """
     OPCODE_LENGTH = 0x2
@@ -224,7 +224,8 @@ class Cpu:
             # step PC
             self.step_pc()
             # execute it
-            decoded_opcode()
+            if decoded_opcode is not None:
+                decoded_opcode()
         except Exception as ex:
             print('\n=== Debug Trace ===')
             print(f'PC {hex(pc)}; Opcode {hex(opcode)}; Error: {ex}\n')
@@ -238,7 +239,8 @@ class Cpu:
                 break
 
         if opcode_function is None:
-            raise Exception('Opcode cannot be decoded: %s' % hex(opcode));
+            return None
+            # raise Exception('Opcode cannot be decoded: %s' % hex(opcode));
 
         return lambda: opcode_function(opcode)
 
@@ -285,7 +287,6 @@ class Cpu:
         """ Increment PC by 2 bytes """
         pc_value = self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS)
         pc_value = pc_value + 0x2
-        self.validate_memory_access_address(pc_value)
         # TODO: check if is in even position
         self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, pc_value)
 
@@ -297,12 +298,6 @@ class Cpu:
 
         if not self.is_valid_hexadecimal(register):
             raise Exception('Invalid register, use V0 to VF')
-
-    def validate_memory_access_address(self, address):
-        """ Validate if the given address is allowed to be accessed. """
-
-        if address < Cpu.MEMORY_PROGRAM_CODE_AREA_START_ADDRESS or address >= Cpu.MEMORY_INTERPRETER_AREA_START_ADDRESS:
-            raise Exception('Illegal memory access: %s' % hex(address))
 
     def calculate_data_register_memory_address(self, register):
         """ Return the memory position for the given register (0 to F). """
@@ -357,7 +352,6 @@ class Cpu:
     def write_register_pc(self, addr):
         """ Set register `PC` to the given address. """
 
-        self.validate_memory_access_address(addr)
         self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, addr)
 
     def opcode_0NNN(self, addr=None):
@@ -391,7 +385,6 @@ class Cpu:
 
         The interpreter sets the program counter to NNN.
         """
-        self.validate_memory_access_address(addr)
         self.write_register_pc(addr)
 
     def opcode_2NNN(self, addr):
@@ -468,6 +461,7 @@ class Cpu:
         x_value = self.read_V(x)
         y_value = self.read_V(y)
         self.write_V(x, x_value | y_value)
+        self.write_flag(0)
 
     def opcode_8XY2(self, x, y):
         """ Set VX = VX AND VY.
@@ -479,6 +473,7 @@ class Cpu:
         x_value = self.read_V(x)
         y_value = self.read_V(y)
         self.write_V(x, x_value & y_value)
+        self.write_flag(0)
 
     def opcode_8XY3(self, x, y):
         """ Set VX = VX XOR VY.
@@ -491,6 +486,7 @@ class Cpu:
         x_value = self.read_V(x)
         y_value = self.read_V(y)
         self.write_V(x, x_value ^ y_value)
+        self.write_flag(0)
 
     def opcode_8XY4(self, x, y):
         """ Set VX = VX + VY, set VF = carry.
@@ -574,7 +570,6 @@ class Cpu:
 
         The value of register I is set to NNN.
         """
-        # self.validate_memory_access_address(addr)
         self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, addr)
 
     def opcode_BNNN(self, addr):
@@ -582,10 +577,10 @@ class Cpu:
         Jump to location NNN + V0.
 
         The program counter is set to NNN Plus the value of V0.
+        COSMAC VIP implemented this way.
         """
         v0_value = self.read_V(0x0)
         addr = addr + (v0_value * 2) # double as PC uses 2-bytes (?)
-        self.validate_memory_access_address(addr)
         self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, addr)
 
     def opcode_CXKK(self, x, k):
@@ -746,7 +741,6 @@ class Cpu:
         x_value = self.read_V(x)
         I_value = self.memory.read_16bit(Cpu.REGISTER_I_ADDRESS)
         new_address = x_value + I_value
-        self.validate_memory_access_address(new_address)
         self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, new_address)
 
     def opcode_FX29(self, x):
@@ -785,12 +779,12 @@ class Cpu:
         """
         addr = self.memory.read_16bit(Cpu.REGISTER_I_ADDRESS)
         for i in range(0, x + 1):
-            self.validate_memory_access_address(addr)
             value = self.read_V(i)
             self.memory.write_8bit(addr, value)
             addr = addr + 1
-        # COSMAC VIP doesn't change I
-        # addr = self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, addr)
+
+        # COSMAC VIP changes I to I + X + 1 (modern implementations doesn't, this can be toggle)
+        self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, addr)
 
     def opcode_FX65(self, x):
         """ Read registers V0 through VX, inclusive, with the values stored in memory starting at address I.
@@ -800,10 +794,10 @@ class Cpu:
         """
         addr = self.memory.read_16bit(Cpu.REGISTER_I_ADDRESS)
         for i in range(0, x + 1):
-            self.validate_memory_access_address(addr)
             value = self.memory.read_8bit(addr)
             self.write_V(i, value)
             addr = addr + 1
-        # COSMAC VIP doesn't change I
-        # addr = self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, addr)
+
+        # COSMAC VIP changes I to I + X + 1 (modern implementations doesn't, this can be toggle)
+        self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, addr)
 

@@ -32,10 +32,6 @@ class CpuOpcodesTestCase(unittest.TestCase):
     def assert_memory_address_8bit_value(self, addr, expected_value):
         self.assert_equal_hex(self.memory.read_8bit(addr), expected_value)
 
-    def test_opcode_0NNN(self):
-        with self.assertRaises(Exception):
-            self.cpu.opcode_0NNN()
-
     def test_opcode_00E0_should_clean_display(self):
         self.memory.write_8bit(0xF00, 0xF0)
         self.memory.write_8bit(0xF10, 0xF0)
@@ -74,10 +70,6 @@ class CpuOpcodesTestCase(unittest.TestCase):
         self.cpu.opcode_1NNN(0x8FF)
 
         self.assert_equal_hex(self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS), 0x8FF)
-
-    def test_opcode_1NNN_should_reject_not_allowed_memory(self):
-        with self.assertRaises(Exception):
-            self.cpu.opcode_1NNN(0xEA0)
 
     def test_opcode_2NNN_should_be_correct_state_before_subroutine(self):
         self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, 0x200)
@@ -201,6 +193,7 @@ class CpuOpcodesTestCase(unittest.TestCase):
     def test_opcode_8XY1_should_apply_OR_on_two_register_storing_result_first_one(self):
         self.cpu.write_V(0x1, 0x3)
         self.cpu.write_V(0xD, 0x5)
+        self.cpu.write_flag(0x1)
 
         self.cpu.opcode_8XY1(0x1, 0xD)
 
@@ -214,24 +207,29 @@ class CpuOpcodesTestCase(unittest.TestCase):
 
         self.assert_data_register_value(0x3, 0x2)
         self.assert_data_register_value(0xE, 0x2)
+        self.assert_data_register_value(0xF, 0x0)
 
     def test_opcode_8XY2_should_apply_AND_on_two_register_storing_result_first_one(self):
         self.cpu.write_V(0x0, 0x3)
         self.cpu.write_V(0x1, 0x5)
+        self.cpu.write_flag(0x1)
 
         self.cpu.opcode_8XY2(0x0, 0x1)
 
         self.assert_data_register_value(0x0, 0x1)
         self.assert_data_register_value(0x1, 0x5)
+        self.assert_data_register_value(0xF, 0x0)
 
     def test_opcode_8XY3_should_apply_XOR_on_two_register_storing_result_first_on(self):
         self.cpu.write_V(0xA, 0x5)
         self.cpu.write_V(0xB, 0x3)
+        self.cpu.write_flag(0x1)
 
         self.cpu.opcode_8XY3(0xA, 0xB)
 
         self.assert_data_register_value(0xA, 0x6)
         self.assert_data_register_value(0xB, 0x3)
+        self.assert_data_register_value(0xF, 0x0)
 
     def test_opcode_8XY4_should_add_two_registers_storing_result_first_one_and_not_set_carry_when_not_overflowing(self):
         self.cpu.write_V(0x4, 0x6)
@@ -373,12 +371,6 @@ class CpuOpcodesTestCase(unittest.TestCase):
 
         self.assert_memory_address_16bit_value(Cpu.REGISTER_I_ADDRESS, 0x230)
 
-    # def test_opcode_ANNN_should_not_set_not_allowed_address_register_I(self):
-    #     self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, 0x2FF)
-    #
-    #     with self.assertRaises(Exception):
-    #         self.cpu.opcode_ANNN(0xF30)
-
     def test_opcode_BNNN_should_jump_to_address_plus_data_register_V0(self):
         self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, 0x200)
         self.cpu.write_V(0x0, 0x2)
@@ -387,13 +379,6 @@ class CpuOpcodesTestCase(unittest.TestCase):
 
         self.assert_data_register_value(0x0, 0x2)
         self.assert_memory_address_16bit_value(Cpu.REGISTER_PC_ADDRESS, 0x404)
-
-    def test_opcode_BNNN_should_not_jump_to_address_not_allowed(self):
-        self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, 0x200)
-        self.cpu.write_V(0x0, 0xA)
-
-        with self.assertRaises(Exception):
-            self.cpu.opcode_BNNN(0xE99)
 
     def test_opcode_CXKK_should_set_data_register_X_to_random_byte_AND_0(self):
         self.cpu.write_V(0x9, 0xF)
@@ -781,14 +766,13 @@ class CpuOpcodesTestCase(unittest.TestCase):
 
         self.cpu.opcode_FX55(0x4)
 
-        addr = self.memory.read_16bit(Cpu.REGISTER_I_ADDRESS)
-        self.assert_memory_address_8bit_value(addr, 0xAA)
-        self.assert_memory_address_8bit_value(addr + 1, 0xBB)
-        self.assert_memory_address_8bit_value(addr + 2, 0xCC)
-        self.assert_memory_address_8bit_value(addr + 3, 0x19)
-        self.assert_memory_address_8bit_value(addr + 4, 0x20)
-        # COSMAC VIP doesn't change I
-        self.assert_memory_address_16bit_value(Cpu.REGISTER_I_ADDRESS, 0x700)
+        self.assert_memory_address_8bit_value(0x700, 0xAA)
+        self.assert_memory_address_8bit_value(0x701, 0xBB)
+        self.assert_memory_address_8bit_value(0x702, 0xCC)
+        self.assert_memory_address_8bit_value(0x703, 0x19)
+        self.assert_memory_address_8bit_value(0x704, 0x20)
+        # COSMAC VIP changes I
+        self.assert_memory_address_16bit_value(Cpu.REGISTER_I_ADDRESS, 0x705)
 
     def test_opcode_FX65_should_copy_range_memory_value_into_data_registers(self):
         self.memory.write_16bit(Cpu.REGISTER_I_ADDRESS, 0x700)
@@ -805,6 +789,6 @@ class CpuOpcodesTestCase(unittest.TestCase):
         self.assert_data_register_value(0x2, 0xCC)
         self.assert_data_register_value(0x3, 0x19)
         self.assert_data_register_value(0x4, 0x20)
-        # COSMAC VIP doesn't change I
-        self.assert_memory_address_16bit_value(Cpu.REGISTER_I_ADDRESS, 0x700)
+        # COSMAC VIP changes I
+        self.assert_memory_address_16bit_value(Cpu.REGISTER_I_ADDRESS, 0x705)
 
