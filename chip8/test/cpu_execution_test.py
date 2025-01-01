@@ -13,7 +13,7 @@ class CpuExecutionTestCase(unittest.TestCase):
     def setUp(self):
         self.memory = Memory()
         self.display = Display(self.memory)
-        self.keyboard = Keyboard(mocked=True)
+        self.keyboard = Keyboard()
         self.sound = Sound(mocked=True)
 
         self.cpu = Cpu(self.memory, self.display, self.keyboard, self.sound)

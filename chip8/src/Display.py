@@ -34,8 +34,6 @@ class Display:
         pass
 
     def render(self):
-        # self.screen.blit(Surface, (0,0))
-
         py_x = 0
         py_y = 0
 

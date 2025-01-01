@@ -6,6 +6,9 @@ class CancellationToken:
     canceled = False
 
 class Clock(Thread):
+    """
+    Class to represent a clock as a thread.
+    """
     canceled = False
     cancellation_token = CancellationToken()
 

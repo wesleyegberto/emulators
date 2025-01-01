@@ -168,7 +168,14 @@ class Cpu:
         # clear the screen
         self.opcode_00E0()
 
-    def start(self, on_quit):
+    def handle_pygame_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.stop()
+            if event.type == pygame.KEYDOWN or event.type == pygame.KEYUP:
+                self.keyboard.handle_pygame_event(event)
+
+    def start(self, on_stop):
         """ Start the CPU processing. """
         # Steps:
         # 1 - advance clock
@@ -179,12 +186,11 @@ class Cpu:
         # 3 - check interruption (DT)
         # 4 - check ST to beep
 
+        if on_stop != None:
+            self.on_stop = on_stop
+
         while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.stop(on_quit)
-                if event.type == pygame.KEYDOWN:
-                    self.keyboard.handle_pygame_event(event)
+            self.handle_pygame_events()
 
             self.execute_cpu_cycle()
 
@@ -195,9 +201,9 @@ class Cpu:
             time.sleep(1 / Cpu.CLOCK_SPEED)
             # self.clock.tick(Cpu.CLOCK_SPEED)
 
-    def stop(self, on_quit):
-        if on_quit is not None:
-            on_quit()
+    def stop(self):
+        if self.on_stop != None:
+            self.on_stop()
 
         pygame.quit()
         pygame.mixer.quit()
@@ -226,27 +232,24 @@ class Cpu:
 
         Steps:
         - fetch instruction
-        - decode instruction
         - step PC
+        - decode instruction
         - execute
         """
 
         # fetch the opcode
         pc = self.memory.read_16bit(Cpu.REGISTER_PC_ADDRESS)
         opcode = self.memory.read_16bit(pc)
+        # print(f'\tPC {hex(pc)}; Opcode {hex(opcode)}')
+        self.step_pc()
 
         # empty memory just do nothing
         if opcode == 0x0000:
-            self.step_pc()
             return
 
         try:
             # decode it
             decoded_opcode = self.decode_opcode(opcode)
-            # print(f'\tPC {hex(pc)}; Opcode {hex(opcode)}')
-
-            # step PC
-            self.step_pc()
 
             # execute it
             if decoded_opcode is not None:
@@ -681,10 +684,9 @@ class Cpu:
         Checks the keyboard, and if the key corresponding to the value of VX
         is currently in the down position, PC is increased by 2.
         """
-        key_pressed = self.keyboard.read_key()
         x_value = self.read_V(x)
 
-        if key_pressed == x_value:
+        if self.keyboard.is_key_pressing_down(x_value):
             self.step_pc()
 
     def opcode_EXA1(self, x):
@@ -693,10 +695,9 @@ class Cpu:
         Checks the keyboard, and if the key corresponding to the value of VX
         is currently in the up position, PC is increased by 2.
         """
-        key_pressed = self.keyboard.read_key()
         x_value = self.read_V(x)
 
-        if key_pressed is not x_value:
+        if not self.keyboard.is_key_pressing_down(x_value):
             self.step_pc()
 
     def opcode_FX00(self, x):
@@ -718,7 +719,7 @@ class Cpu:
         All execution stops until a key is pressed, then the value of that key
         is stored in VX.
         """
-        key_pressed = self.keyboard.wait_key_press()
+        key_pressed = self.keyboard.wait_key_press(self.handle_pygame_events)
         print(f'Key pressed {key_pressed}')
         self.write_V(x, key_pressed)
 

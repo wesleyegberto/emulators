@@ -1,4 +1,5 @@
 import pygame
+from pygame import KEYUP, KEYDOWN
 
 PYGAME_EVENT_MAPPING = {
     pygame.K_1: 0x1, pygame.K_2: 0x2, pygame.K_3: 0x3, pygame.K_4: 0xC,
@@ -27,33 +28,55 @@ class Keyboard:
 
     last_key_pressed = None
 
-    def __init__(self, mocked = False):
-        self.mocked = mocked
+    def __init__(self):
+        self.keyboard = [KEYUP] * 0x10 # 0xF inclusive
+
+    def press_key(self, key_value):
+        self.keyboard[key_value] = KEYDOWN
+
+    def release_key(self, key_value):
+        self.keyboard[key_value] = KEYUP
+        self.last_key_pressed = key_value
+
+    def is_key_pressing_down(self, key_value):
+        """
+        This will take the given value and output it to the keyboard latch.
+        This causes external flag 3 to be set if that key is currently held down or reset if not.
+        """
+        return self.keyboard[key_value] == KEYDOWN
+
+    def send_key(self, key_value):
+        self.press_key(key_value)
+        self.release_key(key_value)
 
     def read_key(self):
         key = self.last_key_pressed
         self.last_key_pressed = None
         return key
 
-    def send_key(self, key_code):
-        self.last_key_pressed = key_code & 0xF
+    def wait_key_press(self, handle_pygame_event):
+        self.last_key_pressed = None
+        key_pressed = None
 
-    def wait_key_press(self):
-        waiting = True and not self.mocked
-        while waiting:
-            for event in pygame.event.get():
-                if event.type == pygame.KEYDOWN:  # Key press detected
-                    waiting = not self.handle_pygame_event(event)
-        return self.read_key()
+        while key_pressed is None:
+            if handle_pygame_event != None:
+                handle_pygame_event()
+            key_pressed = self.read_key()
+
+        return key_pressed
 
     def handle_pygame_event(self, event) -> bool:
-        if event.type != pygame.KEYDOWN:
+        if event.type != KEYDOWN and event.type != KEYUP:
+            return False
+        if event.key not in PYGAME_EVENT_MAPPING:
             return False
 
-        if event.key not in PYGAME_EVENT_MAPPING:
-            return False;
-
         key_value = PYGAME_EVENT_MAPPING.get(event.key)
-        self.send_key(key_value)
+
+        if event.type == KEYDOWN:
+            self.press_key(key_value)
+        else:
+            self.release_key(key_value)
+
         return True
 

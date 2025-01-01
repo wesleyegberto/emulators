@@ -1,6 +1,8 @@
 import unittest
 import sys
 
+from pygame.event import Event
+
 sys.path.append('src')
 
 from Cpu import Cpu
@@ -13,7 +15,7 @@ class CpuOpcodesTestCase(unittest.TestCase):
     def setUp(self):
         self.memory = Memory()
         self.display = Display(self.memory)
-        self.keyboard = Keyboard(mocked=True)
+        self.keyboard = Keyboard()
         self.sound = Sound(mocked=True)
 
         self.cpu = Cpu(self.memory, self.display, self.keyboard, self.sound)
@@ -641,7 +643,7 @@ class CpuOpcodesTestCase(unittest.TestCase):
         self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, 0x200)
         self.cpu.write_V(0xA, 0x5)
 
-        self.keyboard.send_key(0x5)
+        self.keyboard.press_key(0x5)
 
         self.cpu.opcode_EX9E(0xA)
 
@@ -652,7 +654,7 @@ class CpuOpcodesTestCase(unittest.TestCase):
         self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, 0x200)
         self.cpu.write_V(0xA, 0x6)
 
-        self.keyboard.send_key(0x5)
+        self.keyboard.press_key(0x5)
 
         self.cpu.opcode_EX9E(0xA)
 
@@ -663,7 +665,7 @@ class CpuOpcodesTestCase(unittest.TestCase):
         self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, 0x200)
         self.cpu.write_V(0xA, 0x2)
 
-        self.keyboard.send_key(0xA)
+        self.keyboard.press_key(0xA)
 
         self.cpu.opcode_EXA1(0xA)
 
@@ -674,7 +676,7 @@ class CpuOpcodesTestCase(unittest.TestCase):
         self.memory.write_16bit(Cpu.REGISTER_PC_ADDRESS, 0x200)
         self.cpu.write_V(0xA, 0xF)
 
-        self.keyboard.send_key(0xF)
+        self.keyboard.press_key(0xF)
 
         self.cpu.opcode_EXA1(0xA)
 
@@ -693,10 +695,22 @@ class CpuOpcodesTestCase(unittest.TestCase):
 
         self.assert_data_register_value(0xD, 0xD)
 
+    def generate_keyboad_key_pressed_events(self):
+        event = Event(pygame.KEYDOWN, key=pygame.K_v)
+        handled = self.keyboard.handle_pygame_event(event)
+        self.assertTrue(handled)
+
+        event = Event(pygame.KEYUP, key=pygame.K_v)
+        handled = self.keyboard.handle_pygame_event(event)
+        self.assertTrue(handled)
+
+
     def test_opcode_FX0A_should_store_key_pressed_in_register(self):
+        self.cpu.handle_pygame_events = self.generate_keyboad_key_pressed_events
+
         self.cpu.write_V(0xA, 0x1)
 
-        self.keyboard.send_key(0xF)
+        self.keyboard.press_key(0xF)
         self.cpu.opcode_FX0A(0xA)
 
         self.assert_data_register_value(0xA, 0xF)
