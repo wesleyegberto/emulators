@@ -191,7 +191,8 @@ Everytime the ST register is non-zero the Chip8 buzz will sound. The sound has o
     * [x] Implement hexadecimal controller
     * [x] Implement Pygame keyboard input controller
     * [x] Connect to main loop
-    * [ ] Halt only CPU in opcode FX0A (DT and ST is also halting)
+    * [x] Halt only CPU in opcode FX0A (DT and ST is also halting)
+    * [ ] Keyboard test showing ["not released"](https://github.com/Timendus/chip8-test-suite/?tab=readme-ov-file#3-fx0a-getkey)
 * [x] Screen
     * [x] Implement display
     * [x] Implement rendering with Pygame
@@ -199,7 +200,7 @@ Everytime the ST register is non-zero the Chip8 buzz will sound. The sound has o
 * [x] Sound
 * [x] Rom reader
 * [x] Implement main loop
-* [ ] Implement separeted cycles for `DT` and `ST`
+* [x] Implement separeted clocks for `DT` and `ST`
 * [ ] Debug interface (?)
 
 ## Links

@@ -1,5 +1,6 @@
 import sys
 
+from clock import Clock
 from Cpu import Cpu
 from Display import Display
 from Keyboard import Keyboard
@@ -27,9 +28,11 @@ def main(args):
         load_print_font_program(memory)
         # load_screen_warp_program(memory)
         # load_delay_timer_program(memory)
-        # load_rom_file_into_memory('roms/test_opcode.ch8', memory)
 
-    cpu.start()
+    timers_clock = Clock(cpu.update_timers, Cpu.TIMERS_CLOCK_SPEED)
+    timers_clock.start()
+
+    cpu.start(lambda: timers_clock.cancel())
 
 def load_print_font_program(memory: Memory):
     addr = Cpu.MEMORY_PROGRAM_CODE_AREA_START_ADDRESS

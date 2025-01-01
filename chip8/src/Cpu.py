@@ -1,17 +1,17 @@
 import pygame
 import random
 import time
+import sys
 
 from Display import *
 from Memory import Memory
 from Keyboard import Keyboard
 from Sound import Sound
-from utils import quit_emulator
 
 class Cpu:
     """ CPU with registers and cycles """
 
-    DELAY_SPEED = 60 #hz
+    TIMERS_CLOCK_SPEED = 60 #hz
     CLOCK_SPEED = 120 #hz
 
     """ Instruction length: 2 bytes """
@@ -168,7 +168,7 @@ class Cpu:
         # clear the screen
         self.opcode_00E0()
 
-    def start(self):
+    def start(self, on_quit):
         """ Start the CPU processing. """
         # Steps:
         # 1 - advance clock
@@ -182,13 +182,11 @@ class Cpu:
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    quit_emulator()
+                    self.stop(on_quit)
                 if event.type == pygame.KEYDOWN:
                     self.keyboard.handle_pygame_event(event)
 
             self.execute_cpu_cycle()
-
-            self.update_timers()
 
             # emulate graphics
             self.display.render()
@@ -196,6 +194,32 @@ class Cpu:
             # simulate 60Hz refresh rate
             time.sleep(1 / Cpu.CLOCK_SPEED)
             # self.clock.tick(Cpu.CLOCK_SPEED)
+
+    def stop(self, on_quit):
+        if on_quit is not None:
+            on_quit()
+
+        pygame.quit()
+        pygame.mixer.quit()
+        sys.exit()
+
+    def update_timers(self):
+        current_time = time.time()
+        elapsed_time = current_time - self.last_time
+
+        # timer update at rate of 60Hz
+        if elapsed_time >= (1 / Cpu.TIMERS_CLOCK_SPEED):
+            self.last_time = current_time
+
+            # update delay timer
+            if self.memory.read_8bit(self.REGISTER_DT_ADDRESS) > 0:
+                self.memory.write_8bit(self.REGISTER_DT_ADDRESS, self.memory.read_8bit(self.REGISTER_DT_ADDRESS) - 1)
+
+            # update sound timer
+            if self.memory.read_8bit(self.REGISTER_ST_ADDRESS) > 0:
+                self.sound.play()
+
+                self.memory.write_8bit(self.REGISTER_ST_ADDRESS, self.memory.read_8bit(self.REGISTER_ST_ADDRESS) - 1)
 
     def execute_cpu_cycle(self):
         """ CPU cycle execution.
@@ -223,6 +247,7 @@ class Cpu:
 
             # step PC
             self.step_pc()
+
             # execute it
             if decoded_opcode is not None:
                 decoded_opcode()
@@ -243,25 +268,6 @@ class Cpu:
             # raise Exception('Opcode cannot be decoded: %s' % hex(opcode));
 
         return lambda: opcode_function(opcode)
-
-    def update_timers(self):
-        current_time = time.time()
-        elapsed_time = current_time - self.last_time
-
-        # timer update at rate of 60Hz
-        if elapsed_time >= (1 / Cpu.DELAY_SPEED):
-            self.last_time = current_time
-
-            # update delay timer
-            if self.memory.read_8bit(self.REGISTER_DT_ADDRESS) > 0:
-                self.memory.write_8bit(self.REGISTER_DT_ADDRESS, self.memory.read_8bit(self.REGISTER_DT_ADDRESS) - 1)
-
-            # update sound timer
-            if self.memory.read_8bit(self.REGISTER_ST_ADDRESS) > 0:
-                self.sound.play()
-
-                self.memory.write_8bit(self.REGISTER_ST_ADDRESS, self.memory.read_8bit(self.REGISTER_ST_ADDRESS) - 1)
-
 
     def get_opcode_value_X(self, opcode):
         """ Extract value X from opcode with format 0X00. """
@@ -675,7 +681,6 @@ class Cpu:
         Checks the keyboard, and if the key corresponding to the value of VX
         is currently in the down position, PC is increased by 2.
         """
-        # TODO: way for key press
         key_pressed = self.keyboard.read_key()
         x_value = self.read_V(x)
 
