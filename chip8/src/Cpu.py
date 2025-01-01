@@ -14,18 +14,9 @@ class Cpu:
     TIMERS_CLOCK_SPEED = 60 #hz
     CLOCK_SPEED = 120 #hz
 
-    """ Instruction length: 2 bytes """
-    OPCODE_LENGTH = 0x2
-
-    """ Memory area reserved for builtin fonts """
-    MEMORY_FONT_AREA_START_ADDRESS = 0x000
-    MEMORY_FONT_AREA_END_ADDRESS = 0x050
-
     """ Memory area reserved for program opcodes of 2 bytes long """
     MEMORY_PROGRAM_CODE_AREA_START_ADDRESS = 0x200
     MEMORY_PROGRAM_CODE_AREA_END_ADDRESS = 0xE9F
-
-    MEMORY_INTERPRETER_AREA_START_ADDRESS = 0xEA0
 
     """ Memory area reserved for stack (size of 12 x 2-byte) """
     MEMORY_STACK_START_ADDRESS = 0xEA0 # Addr 0xEA0 + REGISTER_SP_ADDRESS
@@ -49,9 +40,6 @@ class Cpu:
     """ Memory area reserved for screen bits (248 bytes) """
     MEMORY_DISPLAY_AREA_START_ADDRESS = 0xF00
     MEMORY_DISPLAY_AREA_END_ADDRESS = 0xFFF
-
-    # number of cycles to execute by the CPU
-    # NUMBER_CYCLES_BY_EXECUTION = 23;
 
     def __init__(self, memory: Memory, display: Display, keyboard: Keyboard, sound: Sound):
         self.memory = memory
